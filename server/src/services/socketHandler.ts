@@ -1,224 +1,285 @@
-import { Server } from 'socket.io';
-import { AppDataSource } from '../config/database';
-import { User } from '../models/User';
-import { Mission } from '../models/Mission';
+import { Server, Socket } from 'socket.io';
+import { chatService } from './ChatService';
+import { notificationService } from './NotificationService';
+import { logger } from '../utils/logger';
+import { 
+  socketAuthMiddleware, 
+  socketErrorMiddleware, 
+  socketLoggingMiddleware,
+  socketValidationMiddleware,
+  AuthenticatedSocket,
+  getSocketUser
+} from '../middleware/socketAuth';
+import { MissionStatus } from '../types/enums';
 
-interface AuthenticatedSocket {
-  userId: string;
-  userRole: string;
-}
+/**
+ * Configuration et gestion des événements Socket.IO
+ */
+export function setupSocketHandler(io: Server): void {
+  // Middleware d'authentification
+  io.use(socketAuthMiddleware);
+  
+  // Middleware de logging
+  io.use(socketLoggingMiddleware);
+  
+  // Middleware de validation
+  io.use(socketValidationMiddleware);
+  
+  // Middleware de gestion d'erreurs
+  io.use(socketErrorMiddleware);
 
-export const socketHandler = (io: Server): void => {
-  io.use(async (socket, next) => {
-    try {
-      const token = socket.handshake.auth.token;
-      
-      if (!token) {
-        return next(new Error('Token d\'authentification manquant'));
-      }
-
-      // TODO: Vérifier le token JWT et récupérer l'utilisateur
-      // const decoded = jwt.verify(token, process.env.JWT_SECRET!);
-      // const user = await userRepository.findOne({ where: { id: decoded.userId } });
-      
-      // Pour l'instant, on simule
-      const authenticatedSocket = socket as AuthenticatedSocket & typeof socket;
-      authenticatedSocket.userId = 'user-id'; // decoded.userId;
-      authenticatedSocket.userRole = 'client'; // user.role;
-      
-      next();
-    } catch (error) {
-      next(new Error('Token invalide'));
+  // Gestion des connexions
+  io.on('connection', (socket: AuthenticatedSocket) => {
+    const user = getSocketUser(socket);
+    
+    if (!user) {
+      logger.error({ socketId: socket.id }, 'Socket connecté sans utilisateur authentifié');
+      socket.disconnect();
+      return;
     }
-  });
 
-  io.on('connection', (socket) => {
-    const authenticatedSocket = socket as AuthenticatedSocket & typeof socket;
-    console.log(`🔌 Utilisateur connecté: ${authenticatedSocket.userId}`);
+    logger.info({ 
+      socketId: socket.id, 
+      userId: user.userId, 
+      email: user.email 
+    }, 'Nouvelle connexion socket authentifiée');
 
     // Rejoindre la room personnelle de l'utilisateur
-    socket.join(`user:${authenticatedSocket.userId}`);
+    socket.join(`user:${user.userId}`);
 
-    // Gestion des messages de chat
+    // Événement de test de connexion
+    socket.on('ping', () => {
+      socket.emit('pong', { timestamp: new Date().toISOString() });
+    });
+
+    // Rejoindre le chat d'une mission
     socket.on('join-mission-chat', async (missionId: string) => {
       try {
-        const missionRepository = AppDataSource.getRepository(Mission);
-        const mission = await missionRepository.findOne({
-          where: { id: missionId },
-          relations: ['client', 'assistant']
-        });
-
-        if (!mission) {
-          socket.emit('error', { message: 'Mission non trouvée' });
-          return;
-        }
-
-        // Vérifier que l'utilisateur a accès à cette mission
-        const hasAccess = 
-          authenticatedSocket.userId === mission.clientId || 
-          authenticatedSocket.userId === mission.assistantId;
-
-        if (!hasAccess) {
-          socket.emit('error', { message: 'Accès refusé' });
-          return;
-        }
-
-        socket.join(`mission:${missionId}`);
-        socket.emit('joined-mission-chat', { missionId });
+        const chatInfo = await chatService.joinMissionChat(user.userId, missionId);
         
-        console.log(`👥 Utilisateur ${authenticatedSocket.userId} a rejoint le chat de la mission ${missionId}`);
-      } catch (error) {
-        console.error('Erreur lors de la jointure du chat:', error);
-        socket.emit('error', { message: 'Erreur lors de la jointure du chat' });
-      }
-    });
-
-    socket.on('leave-mission-chat', (missionId: string) => {
-      socket.leave(`mission:${missionId}`);
-      socket.emit('left-mission-chat', { missionId });
-      console.log(`👋 Utilisateur ${authenticatedSocket.userId} a quitté le chat de la mission ${missionId}`);
-    });
-
-    socket.on('send-message', async (data: {
-      missionId: string;
-      message: string;
-      type?: 'text' | 'image' | 'location';
-    }) => {
-      try {
-        const { missionId, message, type = 'text' } = data;
-
-        const missionRepository = AppDataSource.getRepository(Mission);
-        const mission = await missionRepository.findOne({
-          where: { id: missionId },
-          relations: ['client', 'assistant']
+        // Rejoindre la room de la mission
+        socket.join(`mission:${missionId}`);
+        
+        // Envoyer les informations du chat
+        socket.emit('mission-chat-joined', {
+          missionId,
+          participants: chatInfo.participants,
+          messages: chatInfo.messages
         });
 
-        if (!mission) {
-          socket.emit('error', { message: 'Mission non trouvée' });
-          return;
-        }
-
-        // Vérifier que l'utilisateur a accès à cette mission
-        const hasAccess = 
-          authenticatedSocket.userId === mission.clientId || 
-          authenticatedSocket.userId === mission.assistantId;
-
-        if (!hasAccess) {
-          socket.emit('error', { message: 'Accès refusé' });
-          return;
-        }
-
-        const messageData = {
-          id: Date.now().toString(), // TODO: Générer un vrai ID
-          missionId,
-          senderId: authenticatedSocket.userId,
-          senderRole: authenticatedSocket.userRole,
-          message,
-          type,
+        // Notifier les autres participants
+        socket.to(`mission:${missionId}`).emit('user-joined-chat', {
+          userId: user.userId,
+          userName: user.email, // TODO: Utiliser le nom complet
           timestamp: new Date().toISOString()
-        };
+        });
 
-        // Envoyer le message à tous les participants de la mission
-        io.to(`mission:${missionId}`).emit('new-message', messageData);
+        logger.info({ 
+          socketId: socket.id, 
+          userId: user.userId, 
+          missionId 
+        }, 'Utilisateur a rejoint le chat de mission');
 
-        // TODO: Sauvegarder le message en base de données
-        console.log(`💬 Message envoyé dans la mission ${missionId}:`, messageData);
       } catch (error) {
-        console.error('Erreur lors de l\'envoi du message:', error);
-        socket.emit('error', { message: 'Erreur lors de l\'envoi du message' });
+        logger.error({ 
+          socketId: socket.id, 
+          userId: user.userId, 
+          missionId, 
+          error: error instanceof Error ? error.message : 'Unknown error' 
+        }, 'Erreur lors de la jonction du chat de mission');
+
+        socket.emit('error', {
+          code: 'JOIN_CHAT_FAILED',
+          message: 'Impossible de rejoindre le chat de mission'
+        });
       }
     });
 
-    socket.on('typing', (data: { missionId: string; isTyping: boolean }) => {
-      const { missionId, isTyping } = data;
-      
-      // Informer les autres participants que l'utilisateur tape
-      socket.to(`mission:${missionId}`).emit('user-typing', {
-        userId: authenticatedSocket.userId,
-        isTyping
-      });
+    // Envoyer un message dans le chat
+    socket.on('send-message', async (data: { missionId: string; message: string }) => {
+      try {
+        const { missionId, message } = data;
+        
+        if (!message || message.trim().length === 0) {
+          socket.emit('error', {
+            code: 'EMPTY_MESSAGE',
+            message: 'Le message ne peut pas être vide'
+          });
+          return;
+        }
+
+        const chatMessage = await chatService.sendMessage(user.userId, missionId, message);
+
+        // Émettre le message à tous les participants de la mission
+        io.to(`mission:${missionId}`).emit('new-message', chatMessage);
+
+        // Envoyer des notifications push aux autres participants
+        const participants = await chatService.getMissionParticipants(missionId);
+        const otherParticipants = participants.filter(p => p.id !== user.userId);
+
+        for (const participant of otherParticipants) {
+          await notificationService.sendChatNotification(
+            user.userId,
+            participant.id,
+            missionId,
+            message
+          );
+        }
+
+        logger.info({ 
+          socketId: socket.id, 
+          userId: user.userId, 
+          missionId, 
+          messageId: chatMessage.id 
+        }, 'Message envoyé avec succès');
+
+      } catch (error) {
+        logger.error({ 
+          socketId: socket.id, 
+          userId: user.userId, 
+          error: error instanceof Error ? error.message : 'Unknown error' 
+        }, 'Erreur lors de l\'envoi de message');
+
+        socket.emit('error', {
+          code: 'SEND_MESSAGE_FAILED',
+          message: 'Impossible d\'envoyer le message'
+        });
+      }
     });
 
-    socket.on('mission-status-update', async (data: {
-      missionId: string;
-      status: string;
-      comment?: string;
+    // Mettre à jour le statut d'une mission
+    socket.on('update-mission-status', async (data: { 
+      missionId: string; 
+      status: MissionStatus; 
+      comment?: string 
     }) => {
       try {
         const { missionId, status, comment } = data;
+        
+        const result = await chatService.updateMissionStatus(user.userId, missionId, status, comment);
 
-        const missionRepository = AppDataSource.getRepository(Mission);
-        const mission = await missionRepository.findOne({
-          where: { id: missionId },
-          relations: ['client', 'assistant']
-        });
-
-        if (!mission) {
-          socket.emit('error', { message: 'Mission non trouvée' });
-          return;
-        }
-
-        // Vérifier que l'utilisateur peut mettre à jour le statut
-        const canUpdateStatus = 
-          authenticatedSocket.userId === mission.clientId || 
-          authenticatedSocket.userId === mission.assistantId;
-
-        if (!canUpdateStatus) {
-          socket.emit('error', { message: 'Accès refusé' });
-          return;
-        }
-
-        // TODO: Mettre à jour le statut en base de données
-
-        // Notifier tous les participants
-        io.to(`mission:${missionId}`).emit('mission-status-changed', {
+        // Émettre la mise à jour à tous les participants
+        io.to(`mission:${missionId}`).emit('mission-status-updated', {
           missionId,
           status,
-          updatedBy: authenticatedSocket.userId,
           comment,
-          timestamp: new Date().toISOString()
+          updatedBy: user.userId,
+          timestamp: new Date().toISOString(),
+          mission: result.mission,
+          statusHistory: result.statusHistory
         });
 
-        // Envoyer des notifications push
-        const participants = [mission.clientId, mission.assistantId].filter(id => id !== authenticatedSocket.userId);
-        
-        participants.forEach(participantId => {
-          io.to(`user:${participantId}`).emit('notification', {
-            type: 'mission_status_update',
-            title: 'Mise à jour de mission',
-            message: `Le statut de votre mission a été mis à jour: ${status}`,
-            data: { missionId, status }
-          });
-        });
+        // Envoyer des notifications aux autres participants
+        const participants = await chatService.getMissionParticipants(missionId);
+        const otherParticipants = participants.filter(p => p.id !== user.userId);
 
-        console.log(`📊 Statut de la mission ${missionId} mis à jour: ${status}`);
+        for (const participant of otherParticipants) {
+          await notificationService.sendMissionStatusNotification(
+            participant.id,
+            missionId,
+            status,
+            result.mission.title
+          );
+        }
+
+        logger.info({ 
+          socketId: socket.id, 
+          userId: user.userId, 
+          missionId, 
+          status 
+        }, 'Statut de mission mis à jour');
+
       } catch (error) {
-        console.error('Erreur lors de la mise à jour du statut:', error);
-        socket.emit('error', { message: 'Erreur lors de la mise à jour du statut' });
+        logger.error({ 
+          socketId: socket.id, 
+          userId: user.userId, 
+          error: error instanceof Error ? error.message : 'Unknown error' 
+        }, 'Erreur lors de la mise à jour du statut de mission');
+
+        socket.emit('error', {
+          code: 'UPDATE_STATUS_FAILED',
+          message: 'Impossible de mettre à jour le statut de mission'
+        });
       }
     });
 
-    socket.on('disconnect', () => {
-      console.log(`🔌 Utilisateur déconnecté: ${authenticatedSocket.userId}`);
+    // Quitter le chat d'une mission
+    socket.on('leave-mission-chat', (missionId: string) => {
+      socket.leave(`mission:${missionId}`);
+      
+      // Notifier les autres participants
+      socket.to(`mission:${missionId}`).emit('user-left-chat', {
+        userId: user.userId,
+        userName: user.email, // TODO: Utiliser le nom complet
+        timestamp: new Date().toISOString()
+      });
+
+      logger.info({ 
+        socketId: socket.id, 
+        userId: user.userId, 
+        missionId 
+      }, 'Utilisateur a quitté le chat de mission');
+    });
+
+    // Gestion de la déconnexion
+    socket.on('disconnect', (reason) => {
+      logger.info({ 
+        socketId: socket.id, 
+        userId: user.userId, 
+        reason 
+      }, 'Déconnexion socket');
+
+      // Quitter toutes les rooms
+      socket.rooms.forEach(room => {
+        if (room.startsWith('mission:')) {
+          const missionId = room.replace('mission:', '');
+          socket.to(room).emit('user-disconnected', {
+            userId: user.userId,
+            userName: user.email, // TODO: Utiliser le nom complet
+            timestamp: new Date().toISOString()
+          });
+        }
+      });
+    });
+
+    // Gestion des erreurs
+    socket.on('error', (error) => {
+      logger.error({ 
+        socketId: socket.id, 
+        userId: user.userId, 
+        error 
+      }, 'Erreur socket côté client');
     });
   });
 
-  // Gestion des notifications push
-  io.on('notification', (data: {
-    userId: string;
-    type: string;
-    title: string;
-    message: string;
-    data?: any;
-  }) => {
-    const { userId, type, title, message, data: notificationData } = data;
-    
-    io.to(`user:${userId}`).emit('notification', {
-      type,
-      title,
-      message,
-      data: notificationData,
-      timestamp: new Date().toISOString()
-    });
+  // Gestion des erreurs globales du serveur Socket.IO
+  io.engine.on('connection_error', (err) => {
+    logger.error({ 
+      error: err.message,
+      context: err.context 
+    }, 'Erreur de connexion Socket.IO');
   });
-}; 
+
+  logger.info('Socket.IO handler configuré avec succès');
+}
+
+/**
+ * Fonction utilitaire pour émettre un événement à un utilisateur spécifique
+ */
+export function emitToUser(io: Server, userId: string, event: string, data: any): void {
+  io.to(`user:${userId}`).emit(event, data);
+}
+
+/**
+ * Fonction utilitaire pour émettre un événement à tous les utilisateurs d'une mission
+ */
+export function emitToMission(io: Server, missionId: string, event: string, data: any): void {
+  io.to(`mission:${missionId}`).emit(event, data);
+}
+
+/**
+ * Fonction utilitaire pour émettre un événement à tous les utilisateurs connectés
+ */
+export function emitToAll(io: Server, event: string, data: any): void {
+  io.emit(event, data);
+} 
