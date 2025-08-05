@@ -1,34 +1,36 @@
-import 'reflect-metadata';
+import 'express-async-errors';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import morgan from 'morgan';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import dotenv from 'dotenv';
-import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
+import swaggerJsdoc from 'swagger-jsdoc';
 
-import { initializeDatabase } from './config/database';
-import { authRoutes } from './routes/auth';
-import { missionRoutes } from './routes/missions';
-import { userRoutes } from './routes/users';
-import { paymentRoutes } from './routes/payments';
-import { reviewRoutes } from './routes/reviews';
-import { errorHandler } from './middleware/errorHandler';
-import { authMiddleware } from './middleware/auth';
-import { socketHandler } from './services/socketHandler';
+import { AppDataSource } from './config/database';
+import { config } from './config/config';
+import { logger } from './utils/logger';
+import { errorHandler, notFound } from './middleware/errorHandler';
 
-// Charger les variables d'environnement
-dotenv.config();
+// Routes
+import authRoutes from './routes/auth';
+import missionRoutes from './routes/missions';
+import userRoutes from './routes/users';
+import paymentRoutes from './routes/payments';
+import reviewRoutes from './routes/reviews';
+
+// Socket handler
+import { setupSocketHandler } from './services/socketHandler';
 
 const app = express();
 const server = createServer(app);
+
+// Configuration Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: config.server.corsOrigin,
     methods: ['GET', 'POST']
   }
 });
@@ -40,14 +42,23 @@ const swaggerOptions = {
     info: {
       title: 'Conciergerie Urbaine API',
       version: '1.0.0',
-      description: 'API pour l\'application de micro-missions à la demande',
+      description: 'API pour l\'application de conciergerie urbaine',
     },
     servers: [
       {
-        url: `http://localhost:${process.env.PORT || 3000}`,
+        url: `http://localhost:${config.server.port}`,
         description: 'Serveur de développement',
       },
     ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
   },
   apis: ['./src/routes/*.ts'],
 };
@@ -57,91 +68,102 @@ const swaggerSpec = swaggerJsdoc(swaggerOptions);
 // Middleware de sécurité
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
+  origin: config.server.corsOrigin,
+  credentials: true,
 }));
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'), // limite par IP
-  message: 'Trop de requêtes depuis cette IP, veuillez réessayer plus tard.'
+  windowMs: config.server.rateLimitWindowMs,
+  max: config.server.rateLimitMax,
+  message: {
+    status: 'error',
+    error: {
+      code: 'RATE_LIMIT_EXCEEDED',
+      message: 'Trop de requêtes, veuillez réessayer plus tard',
+    },
+  },
 });
 app.use('/api/', limiter);
 
 // Middleware de parsing
 app.use(compression());
-app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
 
-// Documentation API
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
-// Routes de santé
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV
-  });
+// Logging des requêtes
+app.use((req, res, next) => {
+  logger.info({
+    method: req.method,
+    url: req.url,
+    ip: req.ip,
+    userAgent: req.get('User-Agent'),
+  }, 'Requête entrante');
+  next();
 });
 
 // Routes API
 app.use('/api/auth', authRoutes);
-app.use('/api/missions', authMiddleware, missionRoutes);
-app.use('/api/users', authMiddleware, userRoutes);
-app.use('/api/payments', authMiddleware, paymentRoutes);
-app.use('/api/reviews', authMiddleware, reviewRoutes);
+app.use('/api/missions', missionRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/reviews', reviewRoutes);
 
-// Gestion des erreurs
-app.use(errorHandler);
+// Documentation Swagger
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Gestion des routes non trouvées
-app.use('*', (req, res) => {
-  res.status(404).json({
-    error: 'Route non trouvée',
-    path: req.originalUrl
+// Health check
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'success',
+    data: {
+      message: 'Service opérationnel',
+      timestamp: new Date().toISOString(),
+      environment: config.nodeEnv,
+    },
   });
 });
 
+// Route 404
+app.use('*', notFound);
+
+// Gestionnaire d'erreurs global
+app.use(errorHandler);
+
 // Configuration Socket.IO
-socketHandler(io);
+setupSocketHandler(io);
 
-// Démarrage du serveur
-const PORT = process.env.PORT || 3000;
-
-const startServer = async () => {
+// Initialisation de la base de données et démarrage du serveur
+async function startServer() {
   try {
-    // Initialiser la base de données
-    await initializeDatabase();
-    
+    // Initialiser la connexion à la base de données
+    await AppDataSource.initialize();
+    logger.info('Connexion à la base de données établie');
+
     // Démarrer le serveur
-    server.listen(PORT, () => {
-      console.log(`🚀 Serveur démarré sur le port ${PORT}`);
-      console.log(`📚 Documentation API: http://localhost:${PORT}/api-docs`);
-      console.log(`🏥 Health check: http://localhost:${PORT}/health`);
+    server.listen(config.server.port, () => {
+      logger.info(`Serveur démarré sur le port ${config.server.port}`);
+      logger.info(`Documentation disponible sur http://localhost:${config.server.port}/api-docs`);
     });
   } catch (error) {
-    console.error('❌ Erreur lors du démarrage du serveur:', error);
+    logger.error({ error }, 'Erreur lors du démarrage du serveur');
     process.exit(1);
   }
-};
+}
 
-// Gestion de l'arrêt gracieux
-process.on('SIGTERM', () => {
-  console.log('🛑 Signal SIGTERM reçu, arrêt gracieux...');
+// Gestion propre de l'arrêt
+process.on('SIGINT', async () => {
+  logger.info('Arrêt du serveur...');
   server.close(() => {
-    console.log('✅ Serveur fermé');
+    logger.info('Serveur arrêté');
     process.exit(0);
   });
 });
 
-process.on('SIGINT', () => {
-  console.log('🛑 Signal SIGINT reçu, arrêt gracieux...');
+process.on('SIGTERM', async () => {
+  logger.info('Arrêt du serveur...');
   server.close(() => {
-    console.log('✅ Serveur fermé');
+    logger.info('Serveur arrêté');
     process.exit(0);
   });
 });

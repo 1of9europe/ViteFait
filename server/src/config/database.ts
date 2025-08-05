@@ -1,45 +1,131 @@
-import { DataSource } from 'typeorm';
-import { User } from '../models/User';
-import { Mission } from '../models/Mission';
-import { Review } from '../models/Review';
-import { Payment } from '../models/Payment';
-import { MissionStatusHistory } from '../models/MissionStatusHistory';
+import { DataSource, DataSourceOptions } from 'typeorm';
+import { config } from './config';
+import { logger } from '../utils/logger';
+
+// Configuration des entités avec gestion TS/JS
+const entities = process.env.NODE_ENV === 'production' 
+  ? ['dist/**/*.js']
+  : ['src/**/*.ts'];
+
+// Configuration des migrations avec gestion TS/JS
+const migrations = process.env.NODE_ENV === 'production'
+  ? ['dist/migrations/*.js']
+  : ['src/migrations/*.ts'];
+
+// Configuration des subscribers avec gestion TS/JS
+const subscribers = process.env.NODE_ENV === 'production'
+  ? ['dist/subscribers/*.js']
+  : ['src/subscribers/*.ts'];
+
+// Configuration SSL externalisée
+const sslConfig = config.database.ssl ? {
+  rejectUnauthorized: config.database.sslRejectUnauthorized,
+  ca: config.database.sslCa,
+  cert: config.database.sslCert,
+  key: config.database.sslKey,
+} : false;
+
+// Configuration du pool de connexions
+const poolConfig = {
+  max: config.database.poolMax,
+  min: config.database.poolMin,
+  acquire: config.database.poolAcquire,
+  idle: config.database.poolIdle,
+  connectionTimeoutMillis: config.database.connectionTimeoutMillis,
+  idleTimeoutMillis: config.database.idleTimeoutMillis,
+  statement_timeout: config.database.statementTimeout,
+};
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432'),
-  username: process.env.DB_USERNAME || 'postgres',
-  password: process.env.DB_PASSWORD || 'password',
-  database: process.env.DB_DATABASE || 'conciergerie_urbaine',
-  synchronize: process.env.NODE_ENV === 'development',
-  logging: process.env.NODE_ENV === 'development',
-  entities: [User, Mission, Review, Payment, MissionStatusHistory],
-  migrations: ['src/migrations/*.ts'],
-  subscribers: ['src/subscribers/*.ts'],
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  host: config.database.host,
+  port: config.database.port,
+  username: config.database.username,
+  password: config.database.password,
+  database: config.database.name,
+  entities,
+  migrations,
+  subscribers,
+  synchronize: config.database.synchronize, // Désactivé en production
+  logging: config.database.logging,
+  ssl: sslConfig,
   extra: {
-    max: 20,
-    connectionTimeoutMillis: 5000,
-    idleTimeoutMillis: 30000,
+    ...poolConfig,
+  },
+  cache: {
+    duration: config.database.cacheDuration,
+  },
+} as DataSourceOptions);
+
+// Gestion propre de la fermeture de la base de données
+let isShuttingDown = false;
+
+const gracefulShutdown = async (signal: string) => {
+  if (isShuttingDown) {
+    logger.warn('Shutdown already in progress, ignoring signal', { signal });
+    return;
   }
-});
+
+  isShuttingDown = true;
+  logger.info('Received shutdown signal, closing database connections', { signal });
+
+  try {
+    if (AppDataSource.isInitialized) {
+      await AppDataSource.destroy();
+      logger.info('Database connections closed successfully');
+    }
+    process.exit(0);
+  } catch (error) {
+    logger.error('Error during database shutdown', { error, signal });
+    process.exit(1);
+  }
+};
+
+// Écouter les signaux de fermeture
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 
 export const initializeDatabase = async (): Promise<void> => {
   try {
-    await AppDataSource.initialize();
-    console.log('✅ Base de données connectée avec succès');
+    if (!AppDataSource.isInitialized) {
+      await AppDataSource.initialize();
+      logger.info('Database connection established successfully', {
+        host: config.database.host,
+        port: config.database.port,
+        database: config.database.name,
+        poolSize: config.database.poolMax,
+      });
+    }
   } catch (error) {
-    console.error('❌ Erreur de connexion à la base de données:', error);
-    process.exit(1);
+    logger.error('Failed to initialize database connection', { error });
+    throw error;
   }
 };
 
 export const closeDatabase = async (): Promise<void> => {
   try {
-    await AppDataSource.destroy();
-    console.log('✅ Connexion à la base de données fermée');
+    if (AppDataSource.isInitialized) {
+      await AppDataSource.destroy();
+      logger.info('Database connection closed successfully');
+    }
   } catch (error) {
-    console.error('❌ Erreur lors de la fermeture de la base de données:', error);
+    logger.error('Error closing database connection', { error });
+    throw error;
+  }
+};
+
+// Fonction utilitaire pour vérifier la santé de la base de données
+export const checkDatabaseHealth = async (): Promise<boolean> => {
+  try {
+    if (!AppDataSource.isInitialized) {
+      return false;
+    }
+    
+    // Test de connexion simple
+    await AppDataSource.query('SELECT 1');
+    return true;
+  } catch (error) {
+    logger.error('Database health check failed', { error });
+    return false;
   }
 }; 
