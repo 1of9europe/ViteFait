@@ -13,115 +13,132 @@ import { IsEmail, MinLength } from 'class-validator';
 import * as bcrypt from 'bcryptjs';
 import { Mission } from './Mission';
 import { Review } from './Review';
-
-export enum UserRole {
-  CLIENT = 'client',
-  ASSISTANT = 'assistant'
-}
-
-export enum UserStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  SUSPENDED = 'suspended'
-}
+import { UserRole, UserStatus } from '../types/enums';
 
 @Entity('users')
 @Index(['email'], { unique: true })
 export class User {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ type: 'varchar', length: 255 })
   @IsEmail()
-  email: string;
+  email!: string;
 
   @Column({ type: 'varchar', length: 255 })
   @MinLength(6)
-  password: string;
+  password!: string;
 
   @Column({ type: 'varchar', length: 100 })
-  firstName: string;
+  firstName!: string;
 
   @Column({ type: 'varchar', length: 100 })
-  lastName: string;
+  lastName!: string;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
-  phone: string;
+  phone: string = '';
 
   @Column({
     type: 'enum',
     enum: UserRole,
     default: UserRole.CLIENT
   })
-  role: UserRole;
+  role: UserRole = UserRole.CLIENT;
 
   @Column({
     type: 'enum',
     enum: UserStatus,
     default: UserStatus.ACTIVE
   })
-  status: UserStatus;
+  status: UserStatus = UserStatus.ACTIVE;
 
   @Column({ type: 'decimal', precision: 10, scale: 8, nullable: true })
-  latitude: number;
+  latitude: number = 0;
 
   @Column({ type: 'decimal', precision: 11, scale: 8, nullable: true })
-  longitude: number;
+  longitude: number = 0;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  address: string;
+  address: string = '';
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  city: string;
+  city: string = '';
 
   @Column({ type: 'varchar', length: 10, nullable: true })
-  postalCode: string;
+  postalCode: string = '';
 
   @Column({ type: 'text', nullable: true })
-  profilePicture: string;
+  profilePicture: string = '';
 
   @Column({ type: 'text', nullable: true })
-  bio: string;
+  bio: string = '';
 
   @Column({ type: 'decimal', precision: 3, scale: 2, default: 0 })
-  rating: number;
+  rating: number = 0;
 
   @Column({ type: 'int', default: 0 })
-  reviewCount: number;
+  reviewCount: number = 0;
 
   @Column({ type: 'boolean', default: false })
-  isVerified: boolean;
+  isVerified: boolean = false;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  stripeCustomerId: string;
+  stripeCustomerId: string = '';
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  stripeConnectAccountId: string;
+  stripeConnectAccountId: string = '';
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  fcmToken: string;
+  fcmToken: string = '';
 
   @Column({ type: 'timestamp', nullable: true })
-  lastSeen: Date;
+  lastSeen: Date = new Date();
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt: Date = new Date();
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt: Date = new Date();
 
   // Relations
   @OneToMany(() => Mission, mission => mission.client)
-  clientMissions: Mission[];
+  clientMissions: Mission[] = [];
 
   @OneToMany(() => Mission, mission => mission.assistant)
-  assistantMissions: Mission[];
+  assistantMissions: Mission[] = [];
 
   @OneToMany(() => Review, review => review.reviewer)
-  givenReviews: Review[];
+  givenReviews: Review[] = [];
 
   @OneToMany(() => Review, review => review.reviewed)
-  receivedReviews: Review[];
+  receivedReviews: Review[] = [];
+
+  constructor() {
+    // Initialisation des propriétés avec des valeurs par défaut
+    this.phone = '';
+    this.role = UserRole.CLIENT;
+    this.status = UserStatus.ACTIVE;
+    this.latitude = 0;
+    this.longitude = 0;
+    this.address = '';
+    this.city = '';
+    this.postalCode = '';
+    this.profilePicture = '';
+    this.bio = '';
+    this.rating = 0;
+    this.reviewCount = 0;
+    this.isVerified = false;
+    this.stripeCustomerId = '';
+    this.stripeConnectAccountId = '';
+    this.fcmToken = '';
+    this.lastSeen = new Date();
+    this.createdAt = new Date();
+    this.updatedAt = new Date();
+    this.clientMissions = [];
+    this.assistantMissions = [];
+    this.givenReviews = [];
+    this.receivedReviews = [];
+  }
 
   // Hooks
   @BeforeInsert()
@@ -155,7 +172,7 @@ export class User {
 
   toJSON(): Partial<User> {
     const user = { ...this };
-    delete user.password;
+    delete (user as any).password;
     return user;
   }
 } 

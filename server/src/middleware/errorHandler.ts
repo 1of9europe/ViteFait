@@ -5,6 +5,54 @@ export interface AppError extends Error {
   isOperational?: boolean;
 }
 
+// Classes d'erreur personnalisées
+export class HttpError extends Error {
+  public statusCode: number;
+  public isOperational: boolean;
+
+  constructor(message: string, statusCode: number = 500) {
+    super(message);
+    this.statusCode = statusCode;
+    this.isOperational = true;
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+export class BadRequestError extends HttpError {
+  constructor(code: string, message: string) {
+    super(message, 400);
+    this.name = 'BadRequestError';
+  }
+}
+
+export class UnauthorizedError extends HttpError {
+  constructor(code: string, message: string) {
+    super(message, 401);
+    this.name = 'UnauthorizedError';
+  }
+}
+
+export class ForbiddenError extends HttpError {
+  constructor(code: string, message: string) {
+    super(message, 403);
+    this.name = 'ForbiddenError';
+  }
+}
+
+export class NotFoundError extends HttpError {
+  constructor(code: string, message: string) {
+    super(message, 404);
+    this.name = 'NotFoundError';
+  }
+}
+
+export class ConflictError extends HttpError {
+  constructor(code: string, message: string) {
+    super(message, 409);
+    this.name = 'ConflictError';
+  }
+}
+
 export const errorHandler = (
   error: AppError,
   req: Request,
@@ -15,7 +63,7 @@ export const errorHandler = (
   const message = error.message || 'Erreur interne du serveur';
 
   // Log de l'erreur en développement
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env['NODE_ENV'] === 'development') {
     console.error('❌ Erreur:', {
       message: error.message,
       stack: error.stack,
@@ -33,7 +81,7 @@ export const errorHandler = (
     error: {
       message,
       statusCode,
-      ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+      ...(process.env['NODE_ENV'] === 'development' && { stack: error.stack })
     }
   });
 };

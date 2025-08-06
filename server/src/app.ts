@@ -24,11 +24,17 @@ import { socketHandler } from './services/socketHandler';
 // Charger les variables d'environnement
 dotenv.config();
 
+// Vérification des secrets JWT obligatoires
+if (!process.env['JWT_SECRET'] || !process.env['JWT_REFRESH_SECRET']) {
+  console.error('❌ Les variables JWT_SECRET et JWT_REFRESH_SECRET doivent être définies');
+  process.exit(1);
+}
+
 const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: process.env['FRONTEND_URL'] || 'http://localhost:3000',
     methods: ['GET', 'POST']
   }
 });
@@ -44,7 +50,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: `http://localhost:${process.env.PORT || 3000}`,
+        url: `http://localhost:${process.env['PORT'] || 3000}`,
         description: 'Serveur de développement',
       },
     ],
@@ -57,14 +63,14 @@ const swaggerSpec = swaggerJsdoc(swaggerOptions);
 // Middleware de sécurité
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: process.env['FRONTEND_URL'] || 'http://localhost:3000',
   credentials: true
 }));
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'), // limite par IP
+  windowMs: parseInt(process.env['RATE_LIMIT_WINDOW_MS'] || '900000'), // 15 minutes
+  max: parseInt(process.env['RATE_LIMIT_MAX_REQUESTS'] || '100'), // limite par IP
   message: 'Trop de requêtes depuis cette IP, veuillez réessayer plus tard.'
 });
 app.use('/api/', limiter);
@@ -84,7 +90,7 @@ app.get('/health', (req, res) => {
     status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    environment: process.env.NODE_ENV
+    environment: process.env['NODE_ENV']
   });
 });
 

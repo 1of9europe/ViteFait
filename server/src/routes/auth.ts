@@ -1,13 +1,15 @@
 import { Router, Request, Response } from 'express';
 import Joi from 'joi';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { AppDataSource } from '../config/database';
 import { User, UserRole } from '../models/User';
 import { createError } from '../middleware/errorHandler';
+import { authService } from '../services/AuthService';
+import { validateSignup, validateLogin, validateRefreshToken } from '../validators/auth';
 
 const router = Router();
 
-// Schémas de validation
+// Schémas de validation (gardés pour compatibilité)
 const signupSchema = Joi.object({
   email: Joi.string().email().required(),
   password: Joi.string().min(6).required(),
@@ -63,18 +65,9 @@ const loginSchema = Joi.object({
  *       409:
  *         description: Email déjà utilisé
  */
-router.post('/signup', async (req: Request, res: Response) => {
+router.post('/signup', validateSignup, async (req: Request, res: Response, next) => {
   try {
-    // Validation des données
-    const { error, value } = signupSchema.validate(req.body);
-    if (error) {
-      return res.status(400).json({
-        error: 'Données invalides',
-        details: error.details.map(d => d.message)
-      });
-    }
-
-    const { email, password, firstName, lastName, phone, role } = value;
+    const { email, password, firstName, lastName, phone, role } = req.body;
 
     // Vérifier si l'email existe déjà
     const userRepository = AppDataSource.getRepository(User);
@@ -102,15 +95,14 @@ router.post('/signup', async (req: Request, res: Response) => {
     await userRepository.save(user);
 
     // Générer le token JWT
-    const token = jwt.sign(
-      {
-        userId: user.id,
-        email: user.email,
-        role: user.role
-      },
-      process.env.JWT_SECRET || 'fallback_secret',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
+    const payload = {
+      userId: user.id,
+      email: user.email,
+      role: user.role
+    };
+    const options: SignOptions = { expiresIn: process.env['JWT_EXPIRES_IN'] || '7d' };
+
+    const token = jwt.sign(payload, process.env['JWT_SECRET']!, options);
 
     res.status(201).json({
       message: 'Utilisateur créé avec succès',
@@ -118,11 +110,7 @@ router.post('/signup', async (req: Request, res: Response) => {
       token
     });
   } catch (error) {
-    console.error('Erreur lors de l\'inscription:', error);
-    res.status(500).json({
-      error: 'Erreur interne du serveur',
-      message: 'Une erreur est survenue lors de l\'inscription'
-    });
+    next(error);
   }
 });
 
@@ -153,18 +141,9 @@ router.post('/signup', async (req: Request, res: Response) => {
  *       401:
  *         description: Identifiants invalides
  */
-router.post('/login', async (req: Request, res: Response) => {
+router.post('/login', validateLogin, async (req: Request, res: Response, next) => {
   try {
-    // Validation des données
-    const { error, value } = loginSchema.validate(req.body);
-    if (error) {
-      return res.status(400).json({
-        error: 'Données invalides',
-        details: error.details.map(d => d.message)
-      });
-    }
-
-    const { email, password } = value;
+    const { email, password } = req.body;
 
     // Rechercher l'utilisateur
     const userRepository = AppDataSource.getRepository(User);
@@ -201,15 +180,14 @@ router.post('/login', async (req: Request, res: Response) => {
     await userRepository.save(user);
 
     // Générer le token JWT
-    const token = jwt.sign(
-      {
-        userId: user.id,
-        email: user.email,
-        role: user.role
-      },
-      process.env.JWT_SECRET || 'fallback_secret',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
+    const payload = {
+      userId: user.id,
+      email: user.email,
+      role: user.role
+    };
+    const options: SignOptions = { expiresIn: process.env['JWT_EXPIRES_IN'] || '7d' };
+
+    const token = jwt.sign(payload, process.env['JWT_SECRET']!, options);
 
     res.json({
       message: 'Connexion réussie',
@@ -217,11 +195,40 @@ router.post('/login', async (req: Request, res: Response) => {
       token
     });
   } catch (error) {
-    console.error('Erreur lors de la connexion:', error);
-    res.status(500).json({
-      error: 'Erreur interne du serveur',
-      message: 'Une erreur est survenue lors de la connexion'
-    });
+    next(error);
+  }
+});
+
+/**
+ * @swagger
+ * /api/auth/refresh:
+ *   post:
+ *     summary: Rafraîchir un token JWT
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Token rafraîchi avec succès
+ *       401:
+ *         description: Token de rafraîchissement invalide
+ */
+router.post('/refresh', validateRefreshToken, async (req: Request, res: Response, next) => {
+  try {
+    const { refreshToken } = req.body;
+    const result = await authService.refreshToken(refreshToken);
+    res.json(result);
+  } catch (error) {
+    next(error);
   }
 });
 
@@ -239,7 +246,7 @@ router.post('/login', async (req: Request, res: Response) => {
  *       401:
  *         description: Non authentifié
  */
-router.get('/me', async (req: Request, res: Response) => {
+router.get('/me', async (req: Request, res: Response, next) => {
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -252,11 +259,7 @@ router.get('/me', async (req: Request, res: Response) => {
       user: req.user.toJSON()
     });
   } catch (error) {
-    console.error('Erreur lors de la récupération du profil:', error);
-    res.status(500).json({
-      error: 'Erreur interne du serveur',
-      message: 'Une erreur est survenue lors de la récupération du profil'
-    });
+    next(error);
   }
 });
 

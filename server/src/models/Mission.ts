@@ -13,22 +13,7 @@ import { User } from './User';
 import { MissionStatusHistory } from './MissionStatusHistory';
 import { Review } from './Review';
 import { Payment } from './Payment';
-
-export enum MissionStatus {
-  PENDING = 'pending',
-  ACCEPTED = 'accepted',
-  IN_PROGRESS = 'in_progress',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
-  DISPUTED = 'disputed'
-}
-
-export enum MissionPriority {
-  LOW = 'low',
-  MEDIUM = 'medium',
-  HIGH = 'high',
-  URGENT = 'urgent'
-}
+import { MissionStatus, MissionPriority } from '../types/enums';
 
 @Entity('missions')
 @Index(['latitude', 'longitude'])
@@ -71,24 +56,24 @@ export class Mission {
   priceEstimate!: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  cashAdvance!: number;
+  cashAdvance: number = 0;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  finalPrice!: number;
+  finalPrice: number = 0;
 
   @Column({
     type: 'enum',
     enum: MissionStatus,
     default: MissionStatus.PENDING
   })
-  status!: MissionStatus;
+  status: MissionStatus = MissionStatus.PENDING;
 
   @Column({
     type: 'enum',
     enum: MissionPriority,
     default: MissionPriority.MEDIUM
   })
-  priority!: MissionPriority;
+  priority: MissionPriority = MissionPriority.MEDIUM;
 
   @Column({ type: 'text', nullable: true })
   instructions?: string;
@@ -97,10 +82,10 @@ export class Mission {
   requirements?: string;
 
   @Column({ type: 'boolean', default: false })
-  requiresCar!: boolean;
+  requiresCar: boolean = false;
 
   @Column({ type: 'boolean', default: false })
-  requiresTools!: boolean;
+  requiresTools: boolean = false;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   category?: string;
@@ -124,16 +109,16 @@ export class Mission {
   cancellationReason?: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  commissionAmount!: number;
+  commissionAmount: number = 0;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   stripePaymentIntentId?: string;
 
   @CreateDateColumn()
-  createdAt!: Date;
+  createdAt: Date = new Date();
 
   @UpdateDateColumn()
-  updatedAt!: Date;
+  updatedAt: Date = new Date();
 
   // Relations
   @ManyToOne(() => User, user => user.clientMissions)
@@ -151,13 +136,29 @@ export class Mission {
   assistantId?: string;
 
   @OneToMany(() => MissionStatusHistory, history => history.mission)
-  statusHistory!: MissionStatusHistory[];
+  statusHistory: MissionStatusHistory[] = [];
 
   @OneToMany(() => Review, review => review.mission)
-  reviews!: Review[];
+  reviews: Review[] = [];
 
   @OneToMany(() => Payment, payment => payment.mission)
-  payments!: Payment[];
+  payments: Payment[] = [];
+
+  constructor() {
+    // Initialisation des propriétés avec des valeurs par défaut
+    this.cashAdvance = 0;
+    this.finalPrice = 0;
+    this.status = MissionStatus.PENDING;
+    this.priority = MissionPriority.MEDIUM;
+    this.requiresCar = false;
+    this.requiresTools = false;
+    this.commissionAmount = 0;
+    this.createdAt = new Date();
+    this.updatedAt = new Date();
+    this.statusHistory = [];
+    this.reviews = [];
+    this.payments = [];
+  }
 
   // Méthodes
   isPending(): boolean {
