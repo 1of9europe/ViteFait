@@ -1,11 +1,10 @@
 import { Router, Request, Response } from 'express';
 import Joi from 'joi';
 import { AppDataSource } from '../config/database';
-import { Mission, MissionStatus, MissionPriority } from '../models/Mission';
+import { Mission } from '../models/Mission';
+import { MissionStatus } from '../types/enums';
 import { MissionStatusHistory } from '../models/MissionStatusHistory';
-import { User } from '../models/User';
 import { requireClient, requireAssistant } from '../middleware/auth';
-import { createError } from '../middleware/errorHandler';
 
 const router = Router();
 
@@ -113,7 +112,7 @@ router.post('/', requireClient, async (req: Request, res: Response) => {
       commissionAmount: value.priceEstimate * 0.10 // 10% de commission
     });
 
-    const savedMission = await missionRepository.save(mission);
+    const savedMission = await missionRepository.save(mission) as unknown as Mission;
 
     // Créer l'historique de statut initial
     const statusHistory = statusHistoryRepository.create({
@@ -125,13 +124,13 @@ router.post('/', requireClient, async (req: Request, res: Response) => {
 
     await statusHistoryRepository.save(statusHistory);
 
-    res.status(201).json({
+    return res.status(201).json({
       message: 'Mission créée avec succès',
       mission: savedMission
     });
   } catch (error) {
     console.error('Erreur lors de la création de la mission:', error);
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Erreur interne du serveur',
       message: 'Une erreur est survenue lors de la création de la mission'
     });
@@ -276,6 +275,13 @@ router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
+    if (!id) {
+      return res.status(400).json({
+        error: 'ID manquant',
+        message: 'L\'ID de la mission est requis'
+      });
+    }
+
     const missionRepository = AppDataSource.getRepository(Mission);
     const mission = await missionRepository.findOne({
       where: { id },
@@ -289,10 +295,10 @@ router.get('/:id', async (req: Request, res: Response) => {
       });
     }
 
-    res.json({ mission });
+    return res.json({ mission });
   } catch (error) {
     console.error('Erreur lors de la récupération de la mission:', error);
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Erreur interne du serveur',
       message: 'Une erreur est survenue lors de la récupération de la mission'
     });
@@ -325,6 +331,13 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.post('/:id/accept', requireAssistant, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        error: 'ID manquant',
+        message: 'L\'ID de la mission est requis'
+      });
+    }
 
     const missionRepository = AppDataSource.getRepository(Mission);
     const statusHistoryRepository = AppDataSource.getRepository(MissionStatusHistory);
@@ -365,13 +378,13 @@ router.post('/:id/accept', requireAssistant, async (req: Request, res: Response)
 
     await statusHistoryRepository.save(statusHistory);
 
-    res.json({
+    return res.json({
       message: 'Mission acceptée avec succès',
       mission
     });
   } catch (error) {
     console.error('Erreur lors de l\'acceptation de la mission:', error);
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Erreur interne du serveur',
       message: 'Une erreur est survenue lors de l\'acceptation de la mission'
     });
@@ -417,6 +430,13 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { error, value } = updateMissionStatusSchema.validate(req.body);
+
+    if (!id) {
+      return res.status(400).json({
+        error: 'ID manquant',
+        message: 'L\'ID de la mission est requis'
+      });
+    }
 
     if (error) {
       return res.status(400).json({
@@ -481,13 +501,13 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
 
     await statusHistoryRepository.save(statusHistory);
 
-    res.json({
+    return res.json({
       message: 'Statut mis à jour avec succès',
       mission
     });
   } catch (error) {
     console.error('Erreur lors de la mise à jour du statut:', error);
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Erreur interne du serveur',
       message: 'Une erreur est survenue lors de la mise à jour du statut'
     });

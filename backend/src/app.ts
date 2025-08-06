@@ -85,7 +85,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Routes de santé
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.status(200).json({
     status: 'OK',
     timestamp: new Date().toISOString(),
@@ -116,7 +116,7 @@ app.use('*', (req, res) => {
 socketHandler(io);
 
 // Démarrage du serveur
-const PORT = process.env.PORT || 3000;
+const PORT = process.env['PORT'] || 3000;
 
 const startServer = async () => {
   try {

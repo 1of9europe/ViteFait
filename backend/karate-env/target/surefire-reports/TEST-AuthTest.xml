@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="AuthTest" time="0.392" tests="1" errors="1" skipped="0" failures="0">
+  <properties>
+    <property name="java.specification.version" value="23"/>
+    <property name="sun.jnu.encoding" value="UTF-8"/>
+    <property name="java.class.path" value="/Users/yacineyoldi/ViteFait/ViteFait/backend/karate-env/target/test-classes:/Users/yacineyoldi/ViteFait/ViteFait/backend/karate-env/target/classes:/Users/yacineyoldi/.m2/repository/com/intuit/karate/karate-junit5/1.3.1/karate-junit5-1.3.1.jar:/Users/yacineyoldi/.m2/repository/com/intuit/karate/karate-core/1.3.1/karate-core-1.3.1.jar:/Users/yacineyoldi/.m2/repository/org/graalvm/js/js-scriptengine/22.0.0.2/js-scriptengine-22.0.0.2.jar:/Users/yacineyoldi/.m2/repository/org/graalvm/sdk/graal-sdk/22.0.0.2/graal-sdk-22.0.0.2.jar:/Users/yacineyoldi/.m2/repository/org/graalvm/js/js/22.0.0.2/js-22.0.0.2.jar:/Users/yacineyoldi/.m2/repository/org/graalvm/regex/regex/22.0.0.2/regex-22.0.0.2.jar:/Users/yacineyoldi/.m2/repository/org/graalvm/truffle/truffle-api/22.0.0.2/truffle-api-22.0.0.2.jar:/Users/yacineyoldi/.m2/repository/org/thymeleaf/thymeleaf/3.0.14.RELEASE/thymeleaf-3.0.14.RELEASE.jar:/Users/yacineyoldi/.m2/repository/ognl/ognl/3.1.26/ognl-3.1.26.jar:/Users/yacineyoldi/.m2/repository/org/javassist/javassist/3.20.0-GA/javassist-3.20.0-GA.jar:/Users/yacineyoldi/.m2/repository/org/attoparser/attoparser/2.0.5.RELEASE/attoparser-2.0.5.RELEASE.jar:/Users/yacineyoldi/.m2/repository/org/unbescape/unbescape/1.1.6.RELEASE/unbescape-1.1.6.RELEASE.jar:/Users/yacineyoldi/.m2/repository/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar:/Users/yacineyoldi/.m2/repository/com/linecorp/armeria/armeria/1.18.0/armeria-1.18.0.jar:/Users/yacineyoldi/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.3/jackson-core-2.13.3.jar:/Users/yacineyoldi/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.13.3/jackson-annotations-2.13.3.jar:/Users/yacineyoldi/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.13.3/jackson-databind-2.13.3.jar:/Users/yacineyoldi/.m2/repository/io/micrometer/micrometer-core/1.9.2/micrometer-core-1.9.2.jar:/Users/yacineyoldi/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/Users/yacineyoldi/.m2/repository/org/latencyutils/LatencyUtils/2.0.3/LatencyUtils-2.0.3.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-transport/4.1.79.Final/netty-transport-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-common/4.1.79.Final/netty-common-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-buffer/4.1.79.Final/netty-buffer-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-resolver/4.1.79.Final/netty-resolver-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-codec-haproxy/4.1.79.Final/netty-codec-haproxy-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-codec/4.1.79.Final/netty-codec-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-codec-http2/4.1.79.Final/netty-codec-http2-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-handler/4.1.79.Final/netty-handler-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-codec-http/4.1.79.Final/netty-codec-http-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-resolver-dns/4.1.79.Final/netty-resolver-dns-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-codec-dns/4.1.79.Final/netty-codec-dns-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar:/Users/yacineyoldi/.m2/repository/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-transport-native-unix-common/4.1.79.Final/netty-transport-native-unix-common-4.1.79.Final-linux-x86_64.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-transport-native-epoll/4.1.79.Final/netty-transport-native-epoll-4.1.79.Final-linux-x86_64.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-transport-native-unix-common/4.1.79.Final/netty-transport-native-unix-common-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-transport-classes-epoll/4.1.79.Final/netty-transport-classes-epoll-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-resolver-dns-native-macos/4.1.79.Final/netty-resolver-dns-native-macos-4.1.79.Final-osx-x86_64.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-resolver-dns-classes-macos/4.1.79.Final/netty-resolver-dns-classes-macos-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-resolver-dns-native-macos/4.1.79.Final/netty-resolver-dns-native-macos-4.1.79.Final-osx-aarch_64.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-tcnative-boringssl-static/2.0.53.Final/netty-tcnative-boringssl-static-2.0.53.Final-linux-x86_64.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-tcnative-classes/2.0.53.Final/netty-tcnative-classes-2.0.53.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-tcnative-boringssl-static/2.0.53.Final/netty-tcnative-boringssl-static-2.0.53.Final-linux-aarch_64.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-tcnative-boringssl-static/2.0.53.Final/netty-tcnative-boringssl-static-2.0.53.Final-osx-x86_64.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-tcnative-boringssl-static/2.0.53.Final/netty-tcnative-boringssl-static-2.0.53.Final-osx-aarch_64.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-tcnative-boringssl-static/2.0.53.Final/netty-tcnative-boringssl-static-2.0.53.Final-windows-x86_64.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-handler-proxy/4.1.79.Final/netty-handler-proxy-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-codec-socks/4.1.79.Final/netty-codec-socks-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/com/aayushatharva/brotli4j/brotli4j/1.7.1/brotli4j-1.7.1.jar:/Users/yacineyoldi/.m2/repository/org/apache/httpcomponents/httpclient/4.5.13/httpclient-4.5.13.jar:/Users/yacineyoldi/.m2/repository/org/apache/httpcomponents/httpcore/4.4.13/httpcore-4.4.13.jar:/Users/yacineyoldi/.m2/repository/commons-codec/commons-codec/1.11/commons-codec-1.11.jar:/Users/yacineyoldi/.m2/repository/ch/qos/logback/logback-classic/1.2.9/logback-classic-1.2.9.jar:/Users/yacineyoldi/.m2/repository/ch/qos/logback/logback-core/1.2.9/logback-core-1.2.9.jar:/Users/yacineyoldi/.m2/repository/org/slf4j/jcl-over-slf4j/1.7.32/jcl-over-slf4j-1.7.32.jar:/Users/yacineyoldi/.m2/repository/org/antlr/antlr4-runtime/4.9.3/antlr4-runtime-4.9.3.jar:/Users/yacineyoldi/.m2/repository/com/jayway/jsonpath/json-path/2.7.0/json-path-2.7.0.jar:/Users/yacineyoldi/.m2/repository/net/minidev/json-smart/2.4.7/json-smart-2.4.7.jar:/Users/yacineyoldi/.m2/repository/net/minidev/accessors-smart/2.4.7/accessors-smart-2.4.7.jar:/Users/yacineyoldi/.m2/repository/org/ow2/asm/asm/9.1/asm-9.1.jar:/Users/yacineyoldi/.m2/repository/info/cukes/cucumber-java/1.2.5/cucumber-java-1.2.5.jar:/Users/yacineyoldi/.m2/repository/info/cukes/cucumber-core/1.2.5/cucumber-core-1.2.5.jar:/Users/yacineyoldi/.m2/repository/org/yaml/snakeyaml/1.32/snakeyaml-1.32.jar:/Users/yacineyoldi/.m2/repository/de/siegmar/fastcsv/2.0.0/fastcsv-2.0.0.jar:/Users/yacineyoldi/.m2/repository/info/picocli/picocli/4.6.1/picocli-4.6.1.jar:/Users/yacineyoldi/.m2/repository/io/github/classgraph/classgraph/4.8.149/classgraph-4.8.149.jar:/Users/yacineyoldi/.m2/repository/io/github/t12y/resemble/1.0.2/resemble-1.0.2.jar:/Users/yacineyoldi/.m2/repository/io/github/t12y/ssim/1.0.0/ssim-1.0.0.jar:/Users/yacineyoldi/.m2/repository/org/junit/jupiter/junit-jupiter-api/5.7.2/junit-jupiter-api-5.7.2.jar:/Users/yacineyoldi/.m2/repository/org/apiguardian/apiguardian-api/1.1.0/apiguardian-api-1.1.0.jar:/Users/yacineyoldi/.m2/repository/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0.jar:/Users/yacineyoldi/.m2/repository/org/junit/platform/junit-platform-commons/1.7.2/junit-platform-commons-1.7.2.jar:/Users/yacineyoldi/.m2/repository/org/junit/jupiter/junit-jupiter-engine/5.7.2/junit-jupiter-engine-5.7.2.jar:/Users/yacineyoldi/.m2/repository/org/junit/platform/junit-platform-engine/1.7.2/junit-platform-engine-1.7.2.jar:"/>
+    <property name="java.vm.vendor" value="Homebrew"/>
+    <property name="sun.arch.data.model" value="64"/>
+    <property name="java.vendor.url" value="https://github.com/Homebrew/homebrew-core/issues"/>
+    <property name="user.timezone" value="Europe/Paris"/>
+    <property name="os.name" value="Mac OS X"/>
+    <property name="java.vm.specification.version" value="23"/>
+    <property name="sun.java.launcher" value="SUN_STANDARD"/>
+    <property name="user.country" value="FR"/>
+    <property name="sun.boot.library.path" value="/opt/homebrew/Cellar/openjdk/23.0.2/libexec/openjdk.jdk/Contents/Home/lib"/>
+    <property name="sun.java.command" value="/Users/yacineyoldi/ViteFait/ViteFait/backend/karate-env/target/surefire/surefirebooter-20250806193047915_3.jar /Users/yacineyoldi/ViteFait/ViteFait/backend/karate-env/target/surefire 2025-08-06T19-30-47_858-jvmRun1 surefire-20250806193047915_1tmp surefire_0-20250806193047915_2tmp"/>
+    <property name="http.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
+    <property name="jdk.debug" value="release"/>
+    <property name="test" value="AuthTest"/>
+    <property name="surefire.test.class.path" value="/Users/yacineyoldi/ViteFait/ViteFait/backend/karate-env/target/test-classes:/Users/yacineyoldi/ViteFait/ViteFait/backend/karate-env/target/classes:/Users/yacineyoldi/.m2/repository/com/intuit/karate/karate-junit5/1.3.1/karate-junit5-1.3.1.jar:/Users/yacineyoldi/.m2/repository/com/intuit/karate/karate-core/1.3.1/karate-core-1.3.1.jar:/Users/yacineyoldi/.m2/repository/org/graalvm/js/js-scriptengine/22.0.0.2/js-scriptengine-22.0.0.2.jar:/Users/yacineyoldi/.m2/repository/org/graalvm/sdk/graal-sdk/22.0.0.2/graal-sdk-22.0.0.2.jar:/Users/yacineyoldi/.m2/repository/org/graalvm/js/js/22.0.0.2/js-22.0.0.2.jar:/Users/yacineyoldi/.m2/repository/org/graalvm/regex/regex/22.0.0.2/regex-22.0.0.2.jar:/Users/yacineyoldi/.m2/repository/org/graalvm/truffle/truffle-api/22.0.0.2/truffle-api-22.0.0.2.jar:/Users/yacineyoldi/.m2/repository/org/thymeleaf/thymeleaf/3.0.14.RELEASE/thymeleaf-3.0.14.RELEASE.jar:/Users/yacineyoldi/.m2/repository/ognl/ognl/3.1.26/ognl-3.1.26.jar:/Users/yacineyoldi/.m2/repository/org/javassist/javassist/3.20.0-GA/javassist-3.20.0-GA.jar:/Users/yacineyoldi/.m2/repository/org/attoparser/attoparser/2.0.5.RELEASE/attoparser-2.0.5.RELEASE.jar:/Users/yacineyoldi/.m2/repository/org/unbescape/unbescape/1.1.6.RELEASE/unbescape-1.1.6.RELEASE.jar:/Users/yacineyoldi/.m2/repository/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar:/Users/yacineyoldi/.m2/repository/com/linecorp/armeria/armeria/1.18.0/armeria-1.18.0.jar:/Users/yacineyoldi/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.3/jackson-core-2.13.3.jar:/Users/yacineyoldi/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.13.3/jackson-annotations-2.13.3.jar:/Users/yacineyoldi/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.13.3/jackson-databind-2.13.3.jar:/Users/yacineyoldi/.m2/repository/io/micrometer/micrometer-core/1.9.2/micrometer-core-1.9.2.jar:/Users/yacineyoldi/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/Users/yacineyoldi/.m2/repository/org/latencyutils/LatencyUtils/2.0.3/LatencyUtils-2.0.3.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-transport/4.1.79.Final/netty-transport-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-common/4.1.79.Final/netty-common-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-buffer/4.1.79.Final/netty-buffer-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-resolver/4.1.79.Final/netty-resolver-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-codec-haproxy/4.1.79.Final/netty-codec-haproxy-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-codec/4.1.79.Final/netty-codec-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-codec-http2/4.1.79.Final/netty-codec-http2-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-handler/4.1.79.Final/netty-handler-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-codec-http/4.1.79.Final/netty-codec-http-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-resolver-dns/4.1.79.Final/netty-resolver-dns-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-codec-dns/4.1.79.Final/netty-codec-dns-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar:/Users/yacineyoldi/.m2/repository/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-transport-native-unix-common/4.1.79.Final/netty-transport-native-unix-common-4.1.79.Final-linux-x86_64.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-transport-native-epoll/4.1.79.Final/netty-transport-native-epoll-4.1.79.Final-linux-x86_64.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-transport-native-unix-common/4.1.79.Final/netty-transport-native-unix-common-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-transport-classes-epoll/4.1.79.Final/netty-transport-classes-epoll-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-resolver-dns-native-macos/4.1.79.Final/netty-resolver-dns-native-macos-4.1.79.Final-osx-x86_64.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-resolver-dns-classes-macos/4.1.79.Final/netty-resolver-dns-classes-macos-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-resolver-dns-native-macos/4.1.79.Final/netty-resolver-dns-native-macos-4.1.79.Final-osx-aarch_64.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-tcnative-boringssl-static/2.0.53.Final/netty-tcnative-boringssl-static-2.0.53.Final-linux-x86_64.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-tcnative-classes/2.0.53.Final/netty-tcnative-classes-2.0.53.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-tcnative-boringssl-static/2.0.53.Final/netty-tcnative-boringssl-static-2.0.53.Final-linux-aarch_64.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-tcnative-boringssl-static/2.0.53.Final/netty-tcnative-boringssl-static-2.0.53.Final-osx-x86_64.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-tcnative-boringssl-static/2.0.53.Final/netty-tcnative-boringssl-static-2.0.53.Final-osx-aarch_64.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-tcnative-boringssl-static/2.0.53.Final/netty-tcnative-boringssl-static-2.0.53.Final-windows-x86_64.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-handler-proxy/4.1.79.Final/netty-handler-proxy-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/io/netty/netty-codec-socks/4.1.79.Final/netty-codec-socks-4.1.79.Final.jar:/Users/yacineyoldi/.m2/repository/com/aayushatharva/brotli4j/brotli4j/1.7.1/brotli4j-1.7.1.jar:/Users/yacineyoldi/.m2/repository/org/apache/httpcomponents/httpclient/4.5.13/httpclient-4.5.13.jar:/Users/yacineyoldi/.m2/repository/org/apache/httpcomponents/httpcore/4.4.13/httpcore-4.4.13.jar:/Users/yacineyoldi/.m2/repository/commons-codec/commons-codec/1.11/commons-codec-1.11.jar:/Users/yacineyoldi/.m2/repository/ch/qos/logback/logback-classic/1.2.9/logback-classic-1.2.9.jar:/Users/yacineyoldi/.m2/repository/ch/qos/logback/logback-core/1.2.9/logback-core-1.2.9.jar:/Users/yacineyoldi/.m2/repository/org/slf4j/jcl-over-slf4j/1.7.32/jcl-over-slf4j-1.7.32.jar:/Users/yacineyoldi/.m2/repository/org/antlr/antlr4-runtime/4.9.3/antlr4-runtime-4.9.3.jar:/Users/yacineyoldi/.m2/repository/com/jayway/jsonpath/json-path/2.7.0/json-path-2.7.0.jar:/Users/yacineyoldi/.m2/repository/net/minidev/json-smart/2.4.7/json-smart-2.4.7.jar:/Users/yacineyoldi/.m2/repository/net/minidev/accessors-smart/2.4.7/accessors-smart-2.4.7.jar:/Users/yacineyoldi/.m2/repository/org/ow2/asm/asm/9.1/asm-9.1.jar:/Users/yacineyoldi/.m2/repository/info/cukes/cucumber-java/1.2.5/cucumber-java-1.2.5.jar:/Users/yacineyoldi/.m2/repository/info/cukes/cucumber-core/1.2.5/cucumber-core-1.2.5.jar:/Users/yacineyoldi/.m2/repository/org/yaml/snakeyaml/1.32/snakeyaml-1.32.jar:/Users/yacineyoldi/.m2/repository/de/siegmar/fastcsv/2.0.0/fastcsv-2.0.0.jar:/Users/yacineyoldi/.m2/repository/info/picocli/picocli/4.6.1/picocli-4.6.1.jar:/Users/yacineyoldi/.m2/repository/io/github/classgraph/classgraph/4.8.149/classgraph-4.8.149.jar:/Users/yacineyoldi/.m2/repository/io/github/t12y/resemble/1.0.2/resemble-1.0.2.jar:/Users/yacineyoldi/.m2/repository/io/github/t12y/ssim/1.0.0/ssim-1.0.0.jar:/Users/yacineyoldi/.m2/repository/org/junit/jupiter/junit-jupiter-api/5.7.2/junit-jupiter-api-5.7.2.jar:/Users/yacineyoldi/.m2/repository/org/apiguardian/apiguardian-api/1.1.0/apiguardian-api-1.1.0.jar:/Users/yacineyoldi/.m2/repository/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0.jar:/Users/yacineyoldi/.m2/repository/org/junit/platform/junit-platform-commons/1.7.2/junit-platform-commons-1.7.2.jar:/Users/yacineyoldi/.m2/repository/org/junit/jupiter/junit-jupiter-engine/5.7.2/junit-jupiter-engine-5.7.2.jar:/Users/yacineyoldi/.m2/repository/org/junit/platform/junit-platform-engine/1.7.2/junit-platform-engine-1.7.2.jar:"/>
+    <property name="sun.cpu.endian" value="little"/>
+    <property name="user.home" value="/Users/yacineyoldi"/>
+    <property name="user.language" value="fr"/>
+    <property name="java.specification.vendor" value="Oracle Corporation"/>
+    <property name="java.version.date" value="2025-01-21"/>
+    <property name="java.home" value="/opt/homebrew/Cellar/openjdk/23.0.2/libexec/openjdk.jdk/Contents/Home"/>
+    <property name="file.separator" value="/"/>
+    <property name="basedir" value="/Users/yacineyoldi/ViteFait/ViteFait/backend/karate-env"/>
+    <property name="java.vm.compressedOopsMode" value="Zero based"/>
+    <property name="line.separator" value="&#10;"/>
+    <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
+    <property name="java.specification.name" value="Java Platform API Specification"/>
+    <property name="karate.options" value="--tags ~@ignore"/>
+    <property name="apple.awt.application.name" value="ForkedBooter"/>
+    <property name="surefire.real.class.path" value="/Users/yacineyoldi/ViteFait/ViteFait/backend/karate-env/target/surefire/surefirebooter-20250806193047915_3.jar"/>
+    <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
+    <property name="ftp.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
+    <property name="java.runtime.version" value="23.0.2"/>
+    <property name="user.name" value="yacineyoldi"/>
+    <property name="stdout.encoding" value="UTF-8"/>
+    <property name="path.separator" value=":"/>
+    <property name="os.version" value="15.1.1"/>
+    <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
+    <property name="file.encoding" value="UTF-8"/>
+    <property name="java.vm.name" value="OpenJDK 64-Bit Server VM"/>
+    <property name="java.vendor.version" value="Homebrew"/>
+    <property name="localRepository" value="/Users/yacineyoldi/.m2/repository"/>
+    <property name="java.vendor.url.bug" value="https://github.com/Homebrew/homebrew-core/issues"/>
+    <property name="java.io.tmpdir" value="/var/folders/bl/0vcdgcqn47nbc6z48ssxy6b00000gn/T/"/>
+    <property name="java.version" value="23.0.2"/>
+    <property name="user.dir" value="/Users/yacineyoldi/ViteFait/ViteFait/backend/karate-env"/>
+    <property name="os.arch" value="aarch64"/>
+    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
+    <property name="native.encoding" value="UTF-8"/>
+    <property name="java.library.path" value="/Users/yacineyoldi/Library/Java/Extensions:/Library/Java/Extensions:/Network/Library/Java/Extensions:/System/Library/Java/Extensions:/usr/lib/java:."/>
+    <property name="java.vm.info" value="mixed mode, sharing"/>
+    <property name="stderr.encoding" value="UTF-8"/>
+    <property name="java.vendor" value="Homebrew"/>
+    <property name="java.vm.version" value="23.0.2"/>
+    <property name="sun.io.unicode.encoding" value="UnicodeBig"/>
+    <property name="socksNonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
+    <property name="java.class.version" value="67.0"/>
+  </properties>
+  <testcase name="testAuth" classname="AuthTest" time="0.389">
+    <error message="&apos;void sun.misc.Unsafe.ensureClassInitialized(java.lang.Class)&apos;" type="java.lang.NoSuchMethodError"><![CDATA[java.lang.NoSuchMethodError: 'void sun.misc.Unsafe.ensureClassInitialized(java.lang.Class)'
+	at com.oracle.truffle.api.library.LibraryFactory.ensureLibraryInitialized(LibraryFactory.java:384)
+	at com.oracle.truffle.api.library.LibraryFactory.getUncached(LibraryFactory.java:364)
+	at com.oracle.truffle.api.library.LibraryFactory.<init>(LibraryFactory.java:210)
+	at com.oracle.truffle.api.interop.InteropLibraryGen.<init>(InteropLibraryGen.java:170)
+	at com.oracle.truffle.api.interop.InteropLibraryGen.<clinit>(InteropLibraryGen.java:161)
+	at java.base/java.lang.Class.forName0(Native Method)
+	at java.base/java.lang.Class.forName(Class.java:578)
+	at java.base/java.lang.Class.forName(Class.java:557)
+	at com.oracle.truffle.api.library.LibraryFactory.loadGeneratedClass(LibraryFactory.java:777)
+	at com.oracle.truffle.api.library.LibraryFactory.resolveImpl(LibraryFactory.java:740)
+	at com.oracle.truffle.api.library.LibraryFactory.resolve(LibraryFactory.java:733)
+	at com.oracle.truffle.api.interop.InteropLibrary.<clinit>(InteropLibrary.java:2843)
+	at com.oracle.truffle.polyglot.PolyglotValueDispatch.<clinit>(PolyglotValueDispatch.java:155)
+	at com.oracle.truffle.polyglot.PolyglotImpl.initialize(PolyglotImpl.java:163)
+	at org.graalvm.polyglot.impl.AbstractPolyglotImpl.setConstructors(AbstractPolyglotImpl.java:266)
+	at org.graalvm.polyglot.Engine$1.loadAndValidateProviders(Engine.java:917)
+	at org.graalvm.polyglot.Engine$1.run(Engine.java:890)
+	at org.graalvm.polyglot.Engine$1.run(Engine.java:864)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:319)
+	at org.graalvm.polyglot.Engine.initEngineImpl(Engine.java:864)
+	at org.graalvm.polyglot.Engine.access$000(Engine.java:110)
+	at org.graalvm.polyglot.Engine$ImplHolder.<clinit>(Engine.java:136)
+	at org.graalvm.polyglot.Engine.getImpl(Engine.java:360)
+	at org.graalvm.polyglot.Engine$Builder.build(Engine.java:616)
+	at com.intuit.karate.graal.JsEngine.createContext(JsEngine.java:71)
+	at com.intuit.karate.graal.JsEngine.access$000(JsEngine.java:47)
+	at com.intuit.karate.graal.JsEngine$1.initialValue(JsEngine.java:63)
+	at com.intuit.karate.graal.JsEngine$1.initialValue(JsEngine.java:60)
+	at java.base/java.lang.ThreadLocal.setInitialValue(ThreadLocal.java:225)
+	at java.base/java.lang.ThreadLocal.get(ThreadLocal.java:194)
+	at java.base/java.lang.ThreadLocal.get(ThreadLocal.java:172)
+	at com.intuit.karate.graal.JsEngine.global(JsEngine.java:91)
+	at com.intuit.karate.core.Tags.evaluate(Tags.java:156)
+	at com.intuit.karate.core.ScenarioRuntime.isSelectedForExecution(ScenarioRuntime.java:345)
+	at com.intuit.karate.core.ScenarioRuntime.<init>(ScenarioRuntime.java:107)
+	at com.intuit.karate.core.ScenarioIterator.tryAdvance(ScenarioIterator.java:162)
+	at java.base/java.util.stream.StreamSpliterators$WrappingSpliterator.lambda$initPartialTraversalState$0(StreamSpliterators.java:297)
+	at java.base/java.util.stream.StreamSpliterators$AbstractWrappingSpliterator.fillBuffer(StreamSpliterators.java:206)
+	at java.base/java.util.stream.StreamSpliterators$AbstractWrappingSpliterator.doAdvance(StreamSpliterators.java:161)
+	at java.base/java.util.stream.StreamSpliterators$WrappingSpliterator.tryAdvance(StreamSpliterators.java:303)
+	at java.base/java.util.Spliterators$1Adapter.hasNext(Spliterators.java:681)
+	at com.intuit.karate.junit5.FeatureNode.hasNext(FeatureNode.java:63)
+	at com.intuit.karate.junit5.Karate.iterator(Karate.java:65)
+	at java.base/java.lang.Iterable.spliterator(Iterable.java:101)
+	at org.junit.platform.commons.util.CollectionUtils.toStream(CollectionUtils.java:153)
+	at org.junit.jupiter.engine.descriptor.TestFactoryTestDescriptor.toDynamicNodeStream(TestFactoryTestDescriptor.java:122)
+	at org.junit.jupiter.engine.descriptor.TestFactoryTestDescriptor.lambda$invokeTestMethod$1(TestFactoryTestDescriptor.java:99)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.jupiter.engine.descriptor.TestFactoryTestDescriptor.invokeTestMethod(TestFactoryTestDescriptor.java:93)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:131)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:65)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$5(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$7(NodeTestTask.java:129)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:127)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:126)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:84)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1597)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:38)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$5(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$7(NodeTestTask.java:129)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:127)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:126)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:84)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1597)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:38)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$5(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$7(NodeTestTask.java:129)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:127)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:126)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:84)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:32)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:51)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:108)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:88)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:54)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:67)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:52)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:96)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:75)
+	at org.apache.maven.surefire.junitplatform.LazyLauncher.execute(LazyLauncher.java:50)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.execute(JUnitPlatformProvider.java:184)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invokeAllTests(JUnitPlatformProvider.java:148)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invoke(JUnitPlatformProvider.java:122)
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385)
+	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162)
+	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507)
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495)
+]]></error>
+    <system-out><![CDATA[19:30:48.477 [main] INFO com.intuit.karate.Runner - using system property 'karate.options': --tags ~@ignore
+19:30:48.580 [main] DEBUG com.intuit.karate.Suite - [config] classpath:karate-config.js
+]]></system-out>
+  </testcase>
+</testsuite>

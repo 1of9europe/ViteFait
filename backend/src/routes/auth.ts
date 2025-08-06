@@ -1,28 +1,11 @@
 import { Router, Request, Response } from 'express';
-import Joi from 'joi';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { AppDataSource } from '../config/database';
-import { User, UserRole } from '../models/User';
-import { createError } from '../middleware/errorHandler';
+import { User } from '../models/User';
+import { UserRole } from '../types/enums';
 import { authService } from '../services/AuthService';
-import { validateSignup, validateLogin, validateRefreshToken } from '../validators/auth';
 
 const router = Router();
-
-// Schémas de validation (gardés pour compatibilité)
-const signupSchema = Joi.object({
-  email: Joi.string().email().required(),
-  password: Joi.string().min(6).required(),
-  firstName: Joi.string().min(2).max(100).required(),
-  lastName: Joi.string().min(2).max(100).required(),
-  phone: Joi.string().optional(),
-  role: Joi.string().valid('client', 'assistant').default('client')
-});
-
-const loginSchema = Joi.object({
-  email: Joi.string().email().required(),
-  password: Joi.string().required()
-});
 
 /**
  * @swagger
@@ -65,7 +48,7 @@ const loginSchema = Joi.object({
  *       409:
  *         description: Email déjà utilisé
  */
-router.post('/signup', validateSignup, async (req: Request, res: Response, next) => {
+router.post('/signup', async (req: Request, res: Response, next) => {
   try {
     const { email, password, firstName, lastName, phone, role } = req.body;
 
@@ -100,17 +83,17 @@ router.post('/signup', validateSignup, async (req: Request, res: Response, next)
       email: user.email,
       role: user.role
     };
-    const options: SignOptions = { expiresIn: process.env['JWT_EXPIRES_IN'] || '7d' };
+    const options: SignOptions = { expiresIn: '7d' };
 
     const token = jwt.sign(payload, process.env['JWT_SECRET']!, options);
 
-    res.status(201).json({
+    return res.status(201).json({
       message: 'Utilisateur créé avec succès',
       user: user.toJSON(),
       token
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -141,7 +124,7 @@ router.post('/signup', validateSignup, async (req: Request, res: Response, next)
  *       401:
  *         description: Identifiants invalides
  */
-router.post('/login', validateLogin, async (req: Request, res: Response, next) => {
+router.post('/login', async (req: Request, res: Response, next) => {
   try {
     const { email, password } = req.body;
 
@@ -185,17 +168,17 @@ router.post('/login', validateLogin, async (req: Request, res: Response, next) =
       email: user.email,
       role: user.role
     };
-    const options: SignOptions = { expiresIn: process.env['JWT_EXPIRES_IN'] || '7d' };
+    const options: SignOptions = { expiresIn: '7d' };
 
     const token = jwt.sign(payload, process.env['JWT_SECRET']!, options);
 
-    res.json({
+    return res.json({
       message: 'Connexion réussie',
       user: user.toJSON(),
       token
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -222,13 +205,13 @@ router.post('/login', validateLogin, async (req: Request, res: Response, next) =
  *       401:
  *         description: Token de rafraîchissement invalide
  */
-router.post('/refresh', validateRefreshToken, async (req: Request, res: Response, next) => {
+router.post('/refresh', async (req: Request, res: Response, next) => {
   try {
     const { refreshToken } = req.body;
     const result = await authService.refreshToken(refreshToken);
-    res.json(result);
+    return res.json(result);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -255,11 +238,10 @@ router.get('/me', async (req: Request, res: Response, next) => {
       });
     }
 
-    res.json({
-      user: req.user.toJSON()
-    });
+    const userProfile = await authService.getProfile(req.user.id);
+    return res.json({ user: userProfile });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 

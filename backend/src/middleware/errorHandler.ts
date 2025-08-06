@@ -19,35 +19,35 @@ export class HttpError extends Error {
 }
 
 export class BadRequestError extends HttpError {
-  constructor(code: string, message: string) {
+  constructor(_code: string, message: string) {
     super(message, 400);
     this.name = 'BadRequestError';
   }
 }
 
 export class UnauthorizedError extends HttpError {
-  constructor(code: string, message: string) {
+  constructor(_code: string, message: string) {
     super(message, 401);
     this.name = 'UnauthorizedError';
   }
 }
 
 export class ForbiddenError extends HttpError {
-  constructor(code: string, message: string) {
+  constructor(_code: string, message: string) {
     super(message, 403);
     this.name = 'ForbiddenError';
   }
 }
 
 export class NotFoundError extends HttpError {
-  constructor(code: string, message: string) {
+  constructor(_code: string, message: string) {
     super(message, 404);
     this.name = 'NotFoundError';
   }
 }
 
 export class ConflictError extends HttpError {
-  constructor(code: string, message: string) {
+  constructor(_code: string, message: string) {
     super(message, 409);
     this.name = 'ConflictError';
   }
@@ -57,7 +57,7 @@ export const errorHandler = (
   error: AppError,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void => {
   const statusCode = error.statusCode || 500;
   const message = error.message || 'Erreur interne du serveur';
@@ -93,7 +93,7 @@ export const createError = (message: string, statusCode: number = 500): AppError
   return error;
 };
 
-export const notFound = (req: Request, res: Response, next: NextFunction): void => {
+export const notFound = (req: Request, _res: Response, next: NextFunction): void => {
   const error = createError(`Route ${req.originalUrl} non trouvée`, 404);
   next(error);
 }; 
