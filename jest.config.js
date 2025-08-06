@@ -44,7 +44,9 @@ module.exports = {
     '/coverage/'
   ],
   transform: {
-    '^.+\\.ts$': 'ts-jest'
+    '^.+\\.ts$': ['ts-jest', {
+      tsconfig: 'tsconfig.json'
+    }]
   },
   moduleFileExtensions: ['ts', 'js', 'json'],
   verbose: true,
