@@ -4,184 +4,118 @@ services:
   # Base de données PostgreSQL
   postgres:
     image: postgres:14-alpine
-    container_name: conciergerie_urbaine_db
+    container_name: conciergerie-postgres
     environment:
-      POSTGRES_DB: conciergerie_urbaine
+      POSTGRES_DB: conciergerie_urbaine_staging
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./server/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     networks:
-      - conciergerie_network
+      - conciergerie-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Redis pour le cache et les sessions
+  # API Backend
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: conciergerie-api
+    environment:
+      NODE_ENV: staging
+      PORT: 3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: conciergerie_urbaine_staging
+      JWT_SECRET: staging-jwt-secret-key-change-in-production
+      JWT_REFRESH_SECRET: staging-refresh-secret-key-change-in-production
+      JWT_EXPIRES_IN: 1h
+      STRIPE_SECRET_KEY: sk_test_51H1234567890abcdefghijklmnopqrstuvwxyz
+      STRIPE_WEBHOOK_SECRET: whsec_test_webhook_secret
+      FRONTEND_URL: http://localhost:3001
+      RATE_LIMIT_WINDOW_MS: 900000
+      RATE_LIMIT_MAX_REQUESTS: 100
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - conciergerie-network
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis pour le cache et les sessions (optionnel)
   redis:
     image: redis:7-alpine
-    container_name: conciergerie_urbaine_redis
+    container_name: conciergerie-redis
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
-      - conciergerie_network
+      - conciergerie-network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 3
 
-  # Backend API
-  backend:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    container_name: conciergerie_urbaine_backend
-    environment:
-      NODE_ENV: development
-      PORT: 3000
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USERNAME: postgres
-      DB_PASSWORD: password
-      DB_DATABASE: conciergerie_urbaine
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      JWT_SECRET: your_super_secret_jwt_key_change_in_production
-      JWT_EXPIRES_IN: 7d
-      STRIPE_SECRET_KEY: sk_test_your_stripe_secret_key
-      STRIPE_PUBLISHABLE_KEY: pk_test_your_stripe_publishable_key
-      FIREBASE_PROJECT_ID: your_firebase_project_id
-      FIREBASE_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\nYour private key here\n-----END PRIVATE KEY-----\n"
-      FIREBASE_CLIENT_EMAIL: firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./server:/app
-      - /app/node_modules
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - conciergerie_network
-    command: npm run dev
-
-  # Frontend (optionnel pour le développement web)
-  frontend:
-    build:
-      context: ./mobile/ios-app
-      dockerfile: Dockerfile.web
-    container_name: conciergerie_urbaine_frontend
-    environment:
-      REACT_APP_API_URL: http://localhost:3000/api
-      REACT_APP_SOCKET_URL: http://localhost:3000
-    ports:
-      - "3001:3001"
-    volumes:
-      - ./mobile/ios-app:/app
-      - /app/node_modules
-    depends_on:
-      - backend
-    networks:
-      - conciergerie_network
-    command: npm start
-
-  # Nginx reverse proxy
+  # Nginx pour le reverse proxy (optionnel)
   nginx:
     image: nginx:alpine
-    container_name: conciergerie_urbaine_nginx
+    container_name: conciergerie-nginx
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/ssl:/etc/nginx/ssl
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
     depends_on:
-      - backend
-      - frontend
+      - api
     networks:
-      - conciergerie_network
+      - conciergerie-network
+    restart: unless-stopped
 
-  # Monitoring avec Prometheus et Grafana
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: conciergerie_urbaine_prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
-    networks:
-      - conciergerie_network
-
-  grafana:
-    image: grafana/grafana:latest
-    container_name: conciergerie_urbaine_grafana
-    ports:
-      - "3002:3000"
+  # pgAdmin pour la gestion de la base de données (développement uniquement)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: conciergerie-pgadmin
     environment:
-      GF_SECURITY_ADMIN_PASSWORD: admin
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
-      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
-    depends_on:
-      - prometheus
-    networks:
-      - conciergerie_network
-
-  # Logs centralisés avec ELK Stack
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
-    container_name: conciergerie_urbaine_elasticsearch
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
+      PGADMIN_DEFAULT_EMAIL: admin@conciergerie.local
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
-      - "9200:9200"
-    volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
-    networks:
-      - conciergerie_network
-
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.8.0
-    container_name: conciergerie_urbaine_kibana
-    ports:
-      - "5601:5601"
-    environment:
-      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      - "5050:80"
     depends_on:
-      - elasticsearch
+      - postgres
     networks:
-      - conciergerie_network
-
-  logstash:
-    image: docker.elastic.co/logstash/logstash:8.8.0
-    container_name: conciergerie_urbaine_logstash
-    volumes:
-      - ./monitoring/logstash/pipeline:/usr/share/logstash/pipeline
-    depends_on:
-      - elasticsearch
-    networks:
-      - conciergerie_network
+      - conciergerie-network
+    profiles:
+      - dev
 
 volumes:
   postgres_data:
+    driver: local
   redis_data:
-  prometheus_data:
-  grafana_data:
-  elasticsearch_data:
+    driver: local
 
 networks:
-  conciergerie_network:
+  conciergerie-network:
     driver: bridge 

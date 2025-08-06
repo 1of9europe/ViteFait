@@ -1,22 +1,23 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  roots: ['<rootDir>/tests/e2e'],
+  roots: ['<rootDir>/tests'],
   testMatch: [
-    '**/__tests__/**/*.ts',
-    '**/?(*.)+(spec|test).ts'
+    '**/tests/**/*.e2e.test.ts',
+    '**/tests/**/*.integration.test.ts'
   ],
-  transform: {
-    '^.+\\.ts$': 'ts-jest',
-  },
-  setupFilesAfterEnv: ['<rootDir>/tests/e2e/setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   testTimeout: 30000,
-  moduleNameMapping: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-  },
+  maxWorkers: 1,
+  forceExit: true,
+  clearMocks: true,
+  resetMocks: true,
+  restoreMocks: true,
+  collectCoverage: false,
+  verbose: true,
   globals: {
     'ts-jest': {
-      tsconfig: 'tsconfig.json',
-    },
-  },
+      tsconfig: 'tsconfig.json'
+    }
+  }
 }; 

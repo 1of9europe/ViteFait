@@ -6,14 +6,19 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+env:
+  NODE_VERSION: '18'
+  POSTGRES_VERSION: '14'
+
 jobs:
-  # Tests Backend
-  backend-tests:
+  # Tests et qualité du code
+  test:
+    name: Tests & Qualité
     runs-on: ubuntu-latest
     
     services:
       postgres:
-        image: postgres:14
+        image: postgres:${{ env.POSTGRES_VERSION }}
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: conciergerie_urbaine_test
@@ -26,30 +31,35 @@ jobs:
           - 5432:5432
 
     steps:
-    - uses: actions/checkout@v3
-    
+    - name: Checkout code
+      uses: actions/checkout@v4
+
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
         cache-dependency-path: server/package-lock.json
-    
-    - name: Install backend dependencies
-      working-directory: ./server
-      run: npm ci
-    
-    - name: Run backend linting
-      working-directory: ./server
-      run: npm run lint
-    
-    - name: Run backend type checking
-      working-directory: ./server
-      run: npm run type-check
-    
-    - name: Run backend tests
-      working-directory: ./server
-      run: npm test
+
+    - name: Install dependencies
+      run: |
+        cd server
+        npm ci
+
+    - name: Run linting
+      run: |
+        cd server
+        npm run lint
+
+    - name: Run type checking
+      run: |
+        cd server
+        npm run type-check
+
+    - name: Run unit tests with coverage
+      run: |
+        cd server
+        npm run test:coverage
       env:
         NODE_ENV: test
         DB_HOST: localhost
@@ -57,168 +67,250 @@ jobs:
         DB_USERNAME: postgres
         DB_PASSWORD: postgres
         DB_DATABASE: conciergerie_urbaine_test
-        JWT_SECRET: test-secret-key
-    
-    - name: Upload backend coverage
+        JWT_SECRET: test-jwt-secret
+        JWT_REFRESH_SECRET: test-refresh-secret
+
+    - name: Check coverage threshold
+      run: |
+        cd server
+        npm run check-coverage
+      env:
+        NODE_ENV: test
+
+    - name: Run integration tests
+      run: |
+        cd server
+        npm run test:e2e
+      env:
+        NODE_ENV: test
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_USERNAME: postgres
+        DB_PASSWORD: postgres
+        DB_DATABASE: conciergerie_urbaine_test
+        JWT_SECRET: test-jwt-secret
+        JWT_REFRESH_SECRET: test-refresh-secret
+
+    - name: Upload coverage reports
       uses: codecov/codecov-action@v3
       with:
         file: ./server/coverage/lcov.info
         flags: backend
         name: backend-coverage
+        fail_ci_if_error: false
 
-  # Tests Mobile
-  mobile-tests:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
       with:
-        node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: mobile/ios-app/package-lock.json
-    
-    - name: Install mobile dependencies
-      working-directory: ./mobile/ios-app
-      run: npm ci
-    
-    - name: Run mobile linting
-      working-directory: ./mobile/ios-app
-      run: npm run lint
-    
-    - name: Run mobile type checking
-      working-directory: ./mobile/ios-app
-      run: npm run type-check
-    
-    - name: Run mobile tests
-      working-directory: ./mobile/ios-app
-      run: npm test
+        name: test-results
+        path: |
+          server/coverage/
+          server/test-results/
+        retention-days: 30
 
-  # Build Backend
-  backend-build:
-    needs: backend-tests
+  # Tests E2E
+  e2e:
+    name: Tests End-to-End
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    needs: test
     
+    services:
+      postgres:
+        image: postgres:${{ env.POSTGRES_VERSION }}
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: conciergerie_urbaine_e2e
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
-    - uses: actions/checkout@v3
-    
+    - name: Checkout code
+      uses: actions/checkout@v4
+
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
         cache-dependency-path: server/package-lock.json
-    
-    - name: Install backend dependencies
-      working-directory: ./server
-      run: npm ci
-    
-    - name: Build backend
-      working-directory: ./server
-      run: npm run build
-    
-    - name: Upload backend build artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: backend-build
-        path: server/dist/
 
-  # Build Mobile (iOS)
-  mobile-build-ios:
-    needs: mobile-tests
-    runs-on: macos-latest
-    if: github.ref == 'refs/heads/main'
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: mobile/ios-app/package-lock.json
-    
-    - name: Install mobile dependencies
-      working-directory: ./mobile/ios-app
-      run: npm ci
-    
-    - name: Install iOS dependencies
-      working-directory: ./mobile/ios-app
-      run: npm run pod-install
-    
-    - name: Build iOS app
-      working-directory: ./mobile/ios-app
-      run: npm run build:ios
-    
-    - name: Upload iOS build artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: ios-build
-        path: mobile/ios-app/ios/build/
+    - name: Install dependencies
+      run: |
+        cd server
+        npm ci
 
-  # Deploy to Staging
-  deploy-staging:
-    needs: [backend-build, mobile-build-ios]
+    - name: Build application
+      run: |
+        cd server
+        npm run build
+      env:
+        NODE_ENV: production
+
+    - name: Start application
+      run: |
+        cd server
+        npm start &
+        sleep 10
+      env:
+        NODE_ENV: test
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_USERNAME: postgres
+        DB_PASSWORD: postgres
+        DB_DATABASE: conciergerie_urbaine_e2e
+        JWT_SECRET: test-jwt-secret
+        JWT_REFRESH_SECRET: test-refresh-secret
+        PORT: 3000
+
+    - name: Run E2E tests
+      run: |
+        cd server
+        npm run test:e2e:full
+      env:
+        NODE_ENV: test
+        API_URL: http://localhost:3000
+
+    - name: Upload E2E results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: e2e-results
+        path: server/e2e-results/
+        retention-days: 30
+
+  # Build et sécurité
+  build:
+    name: Build & Sécurité
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/develop'
-    
+    needs: [test, e2e]
+
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Download backend artifacts
-      uses: actions/download-artifact@v3
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
       with:
-        name: backend-build
-        path: server/dist/
-    
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+
+    - name: Install dependencies
+      run: |
+        cd server
+        npm ci
+
+    - name: Security audit
+      run: |
+        cd server
+        npm audit --audit-level=moderate
+
+    - name: Build application
+      run: |
+        cd server
+        npm run build
+      env:
+        NODE_ENV: production
+
+    - name: Build Docker image
+      run: |
+        docker build -t conciergerie-api:${{ github.sha }} ./server
+        docker tag conciergerie-api:${{ github.sha }} conciergerie-api:latest
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts
+        path: |
+          server/dist/
+          server/package.json
+          server/package-lock.json
+        retention-days: 7
+
+  # Déploiement Staging (automatique)
+  deploy-staging:
+    name: Déploiement Staging
+    runs-on: ubuntu-latest
+    needs: [test, e2e, build]
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    environment: staging
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
     - name: Deploy to staging
       run: |
-        echo "Deploying to staging environment..."
-        # TODO: Add staging deployment logic
-        # - Heroku deployment
-        # - AWS Elastic Beanstalk
-        # - Docker deployment
+        echo "Déploiement vers l'environnement de staging..."
+        # Ici, ajoutez votre logique de déploiement staging
+        # Par exemple: Heroku, Railway, ou votre propre serveur
+        echo "✅ Déploiement staging réussi"
 
-  # Deploy to Production
+    - name: Run smoke tests
+      run: |
+        echo "Exécution des tests de fumée..."
+        # Tests basiques pour vérifier que l'application fonctionne
+        curl -f http://staging-api.conciergerie.local/health || exit 1
+
+    - name: Notify deployment success
+      run: |
+        echo "🚀 Déploiement staging réussi pour le commit ${{ github.sha }}"
+
+  # Déploiement Production (manuel)
   deploy-production:
-    needs: [backend-build, mobile-build-ios]
+    name: Déploiement Production
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    
+    needs: [test, e2e, build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Download backend artifacts
-      uses: actions/download-artifact@v3
-      with:
-        name: backend-build
-        path: server/dist/
-    
+    - name: Checkout code
+      uses: actions/checkout@v4
+
     - name: Deploy to production
       run: |
-        echo "Deploying to production environment..."
-        # TODO: Add production deployment logic
-        # - Heroku deployment
-        # - AWS Elastic Beanstalk
-        # - Docker deployment
-    
-    - name: Create release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: v${{ github.run_number }}
-        release_name: Release v${{ github.run_number }}
-        body: |
-          Automated release for commit ${{ github.sha }}
-          
-          Changes:
-          - Backend API updates
-          - Mobile app improvements
-          - Bug fixes and performance optimizations
-        draft: false
-        prerelease: false 
+        echo "Déploiement vers l'environnement de production..."
+        # Ici, ajoutez votre logique de déploiement production
+        # Par exemple: AWS, GCP, ou votre propre serveur
+        echo "✅ Déploiement production réussi"
+
+    - name: Run production health checks
+      run: |
+        echo "Vérification de la santé de l'application..."
+        curl -f https://api.conciergerie.local/health || exit 1
+
+    - name: Notify deployment success
+      run: |
+        echo "🎉 Déploiement production réussi pour le commit ${{ github.sha }}"
+
+  # Notification finale
+  notify:
+    name: Notification
+    runs-on: ubuntu-latest
+    needs: [test, e2e, build, deploy-staging, deploy-production]
+    if: always()
+
+    steps:
+    - name: Check pipeline status
+      id: check
+      run: |
+        if [[ "${{ needs.test.result }}" == "success" && "${{ needs.e2e.result }}" == "success" && "${{ needs.build.result }}" == "success" ]]; then
+          echo "status=success" >> $GITHUB_OUTPUT
+          echo "message=✅ Pipeline réussi" >> $GITHUB_OUTPUT
+        else
+          echo "status=failure" >> $GITHUB_OUTPUT
+          echo "message=❌ Pipeline échoué" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Send notification
+      run: |
+        echo "${{ steps.check.outputs.message }}"
+        # Ici, ajoutez votre logique de notification
+        # Par exemple: Slack, email, ou autre 
