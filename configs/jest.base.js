@@ -12,19 +12,12 @@ module.exports = {
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',
-    '!src/app.ts',
-    '!src/migrations/**',
+    '!src/**/index.ts',
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
-  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
-  testTimeout: 10000,
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   moduleNameMapping: {
     '^@/(.*)$': '<rootDir>/src/$1',
-  },
-  globals: {
-    'ts-jest': {
-      tsconfig: 'tsconfig.json',
-    },
   },
 }; 
