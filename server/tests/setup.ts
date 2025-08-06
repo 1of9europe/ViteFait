@@ -2,9 +2,9 @@ import 'reflect-metadata';
 import { AppDataSource } from '../src/config/database';
 
 // Configuration pour les tests
-process.env.NODE_ENV = 'test';
-process.env.JWT_SECRET = 'test-secret-key';
-process.env.DB_DATABASE = 'conciergerie_urbaine_test';
+process.env['NODE_ENV'] = 'test';
+process.env['JWT_SECRET'] = 'test-secret-key';
+process.env['DB_DATABASE'] = 'conciergerie_urbaine_test';
 
 // Configuration globale pour les tests
 beforeAll(async () => {

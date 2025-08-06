@@ -95,7 +95,9 @@ export function isValidPhoneNumber(phone: string): boolean {
  */
 export function maskEmail(email: string): string {
   const [localPart, domain] = email.split('@');
-  if (localPart.length <= 2) {
+  // Si l'email ne contient pas de domaine ou que la partie locale est trop courte,
+  // on retourne l'email tel quel pour éviter les erreurs.
+  if (!localPart || !domain || localPart.length <= 2) {
     return email;
   }
   const maskedLocal = localPart.substring(0, 2) + '*'.repeat(localPart.length - 2);
