@@ -1,9 +1,10 @@
 import { Repository } from 'typeorm';
 import { AppDataSource } from '../config/database';
-import { User, UserRole } from '../models/User';
+import { User } from '../models/User';
+import { UserRole } from '../types/enums';
 import * as jwt from 'jsonwebtoken';
 import { SignOptions } from 'jsonwebtoken';
-import { HttpError, BadRequestError, UnauthorizedError, ConflictError } from '../middleware/errorHandler';
+import { BadRequestError, UnauthorizedError, ConflictError } from '../middleware/errorHandler';
 
 export interface AuthResponse {
   user: Partial<User>;
@@ -246,7 +247,7 @@ export class AuthService {
     const secret = process.env['JWT_SECRET']!;
     const expiresIn = process.env['JWT_EXPIRES_IN'] || '1h';
 
-    return jwt.sign(payload, secret, { expiresIn });
+    return jwt.sign(payload, secret, { expiresIn } as SignOptions);
   }
 
   /**
@@ -261,7 +262,7 @@ export class AuthService {
 
     const secret = process.env['JWT_REFRESH_SECRET']!;
 
-    return jwt.sign(payload, secret, { expiresIn: '7d' });
+    return jwt.sign(payload, secret, { expiresIn: '7d' } as SignOptions);
   }
 }
 

@@ -43,7 +43,7 @@ module.exports = {
     '/coverage/'
   ],
   moduleFileExtensions: ['ts', 'js', 'json'],
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@/controllers/(.*)$': '<rootDir>/src/controllers/$1',
     '^@/models/(.*)$': '<rootDir>/src/models/$1',

@@ -1,8 +1,8 @@
 import request from 'supertest';
-import { app } from '../../src/app';
+import app from '../../src/app';
 import { AppDataSource } from '../../src/config/database';
-import { User, UserRole } from '../../src/models/User';
-import * as bcrypt from 'bcryptjs';
+import { User } from '../../src/models/User';
+import { UserRole } from '../../src/types/enums';
 
 describe('Auth Routes Integration Tests', () => {
   beforeAll(async () => {

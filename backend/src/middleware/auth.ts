@@ -34,7 +34,7 @@ export const authMiddleware = async (
     }
 
     const token = authHeader.substring(7); // Enlever "Bearer "
-    const jwtSecret = process.env.JWT_SECRET;
+    const jwtSecret = process.env['JWT_SECRET'];
 
     if (!jwtSecret) {
       res.status(500).json({

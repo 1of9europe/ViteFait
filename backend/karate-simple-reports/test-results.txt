@@ -1,0 +1,13 @@
+# Tests Karate - Mer  6 aoû 2025 19:36:25 CEST
+
+✅ Inscription utilisateur - Status: 201
+✅ Connexion utilisateur - Status: 200
+✅ Récupération profil utilisateur - Status: 200
+✅ Création de mission - Status: 201
+✅ Récupération mission par ID - Status: 200
+✅ Liste des missions - Status: 200
+✅ Création intent de paiement - Status: 201
+✅ Confirmation de paiement - Status: 200
+❌ Accès sans token - Status: 200 (attendu: 401)
+   Response: {"user":{"id":"test-user-id","email":"test@example.com","firstName":"Test","lastName":"User","role":"client"}}
+✅ Inscription avec données manquantes - Status: 400

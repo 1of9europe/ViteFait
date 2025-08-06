@@ -1,8 +1,9 @@
 import { Router, Request, Response } from 'express';
 import { AppDataSource } from '../config/database';
+import { Payment, PaymentType } from '../models/Payment';
+import { PaymentStatus } from '../types/enums';
 import { Mission } from '../models/Mission';
-import { Payment, PaymentType, PaymentStatus } from '../models/Payment';
-import { requireClient, requireAssistant } from '../middleware/auth';
+import { requireClient } from '../middleware/auth';
 
 const router = Router();
 
@@ -193,6 +194,13 @@ router.get('/mission/:missionId', async (req: Request, res: Response) => {
   try {
     const { missionId } = req.params;
 
+    if (!missionId) {
+      return res.status(400).json({
+        error: 'ID de mission manquant',
+        message: 'L\'ID de la mission est requis'
+      });
+    }
+
     const paymentRepository = AppDataSource.getRepository(Payment);
     const missionRepository = AppDataSource.getRepository(Mission);
 
@@ -225,10 +233,10 @@ router.get('/mission/:missionId', async (req: Request, res: Response) => {
       order: { createdAt: 'DESC' }
     });
 
-    res.json({ payments });
+    return res.json({ payments });
   } catch (error) {
     console.error('Erreur lors de la récupération des paiements:', error);
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Erreur interne du serveur',
       message: 'Une erreur est survenue lors de la récupération des paiements'
     });
