@@ -2,7 +2,7 @@ import { Repository } from 'typeorm';
 import { AppDataSource } from '../config/database';
 import { User } from '../models/User';
 import { logger } from '../utils/logger';
-import { HttpError, NotFoundError } from '../utils/errors';
+import { NotFoundError } from '../utils/errors';
 import { generateId, now } from '../utils/helpers';
 
 export interface NotificationPayload {
@@ -55,7 +55,7 @@ export class NotificationService {
       userId,
       title: payload.title,
       body: payload.body,
-      data: payload.data,
+      data: payload.data || {},
       type: type as any,
       read: false,
       createdAt: now()
@@ -244,7 +244,7 @@ export class NotificationService {
 
       logger.info({ fcmToken, title: payload.title }, 'Notification push envoyée');
     } catch (error) {
-      logger.error({ error: error.message, fcmToken }, 'Erreur lors de l\'envoi de notification push');
+      logger.error({ error: error instanceof Error ? error.message : String(error), fcmToken }, 'Erreur lors de l\'envoi de notification push');
       
       // Ne pas faire échouer l'opération principale si la notification push échoue
       // L'utilisateur recevra quand même la notification dans l'app

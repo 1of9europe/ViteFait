@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { User } from './User';
 import { Mission } from './Mission';
+import { PaymentStatus } from '../types/enums';
 
 export enum PaymentType {
   ESCROW = 'escrow',
@@ -17,14 +18,6 @@ export enum PaymentType {
   REFUND = 'refund',
   CASH_ADVANCE = 'cash_advance',
   COMMISSION = 'commission'
-}
-
-export enum PaymentStatus {
-  PENDING = 'pending',
-  PROCESSING = 'processing',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-  CANCELLED = 'cancelled'
 }
 
 @Entity('payments')
@@ -38,7 +31,7 @@ export class Payment {
   amount!: number;
 
   @Column({ type: 'varchar', length: 3, default: 'EUR' })
-  currency!: string;
+  currency: string = 'EUR';
 
   @Column({
     type: 'enum',
@@ -51,7 +44,7 @@ export class Payment {
     enum: PaymentStatus,
     default: PaymentStatus.PENDING
   })
-  status!: PaymentStatus;
+  status: PaymentStatus = PaymentStatus.PENDING;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   stripePaymentIntentId?: string;
@@ -75,10 +68,10 @@ export class Payment {
   processedAt?: Date;
 
   @CreateDateColumn()
-  createdAt!: Date;
+  createdAt: Date = new Date();
 
   @UpdateDateColumn()
-  updatedAt!: Date;
+  updatedAt: Date = new Date();
 
   // Relations
   @ManyToOne(() => Mission, mission => mission.payments)
@@ -101,6 +94,14 @@ export class Payment {
 
   @Column({ type: 'uuid', nullable: true })
   payeeId?: string;
+
+  constructor() {
+    // Initialisation des propriétés avec des valeurs par défaut
+    this.currency = 'EUR';
+    this.status = PaymentStatus.PENDING;
+    this.createdAt = new Date();
+    this.updatedAt = new Date();
+  }
 
   // Méthodes
   isPending(): boolean {
@@ -144,5 +145,23 @@ export class Payment {
       style: 'currency',
       currency: this.currency
     }).format(this.amount);
+  }
+
+  toJSON(): Partial<Payment> {
+    const result: Partial<Payment> = {
+      id: this.id,
+      amount: this.amount,
+      currency: this.currency,
+      type: this.type,
+      status: this.status,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt
+    };
+    
+    if (this.description) {
+      result.description = this.description;
+    }
+    
+    return result;
   }
 } 

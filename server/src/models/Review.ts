@@ -24,16 +24,16 @@ export class Review {
   comment?: string;
 
   @Column({ type: 'boolean', default: false })
-  isPublic!: boolean;
+  isPublic: boolean = false;
 
   @Column({ type: 'jsonb', nullable: true })
   metadata?: Record<string, any>;
 
   @CreateDateColumn()
-  createdAt!: Date;
+  createdAt: Date = new Date();
 
   @UpdateDateColumn()
-  updatedAt!: Date;
+  updatedAt: Date = new Date();
 
   // Relations
   @ManyToOne(() => Mission, mission => mission.reviews)
@@ -57,6 +57,13 @@ export class Review {
   @Column({ type: 'uuid' })
   reviewedId!: string;
 
+  constructor() {
+    // Initialisation des propriétés avec des valeurs par défaut
+    this.isPublic = false;
+    this.createdAt = new Date();
+    this.updatedAt = new Date();
+  }
+
   // Méthodes
   isValidRating(): boolean {
     return this.rating >= 1 && this.rating <= 5;
@@ -71,5 +78,21 @@ export class Review {
       5: 'Excellent'
     };
     return ratings[this.rating as keyof typeof ratings] || 'Non évalué';
+  }
+
+  toJSON(): Partial<Review> {
+    const result: Partial<Review> = {
+      id: this.id,
+      rating: this.rating,
+      isPublic: this.isPublic,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt
+    };
+    
+    if (this.comment) {
+      result.comment = this.comment;
+    }
+    
+    return result;
   }
 } 

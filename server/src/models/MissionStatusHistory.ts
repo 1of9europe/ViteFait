@@ -6,8 +6,9 @@ import {
   ManyToOne,
   JoinColumn
 } from 'typeorm';
-import { Mission, MissionStatus } from './Mission';
+import { Mission } from './Mission';
 import { User } from './User';
+import { MissionStatus } from '../types/enums';
 
 @Entity('mission_status_history')
 export class MissionStatusHistory {
@@ -27,7 +28,7 @@ export class MissionStatusHistory {
   metadata?: Record<string, any>;
 
   @CreateDateColumn()
-  createdAt!: Date;
+  createdAt: Date = new Date();
 
   // Relations
   @ManyToOne(() => Mission, mission => mission.statusHistory)
@@ -44,16 +45,37 @@ export class MissionStatusHistory {
   @Column({ type: 'uuid', nullable: true })
   changedByUserId?: string;
 
+  constructor() {
+    // Initialisation des propriétés avec des valeurs par défaut
+    this.createdAt = new Date();
+  }
+
   // Méthodes
   getStatusText(): string {
     const statusTexts = {
       [MissionStatus.PENDING]: 'En attente',
       [MissionStatus.ACCEPTED]: 'Acceptée',
+      [MissionStatus.ASSIGNED]: 'Assignée',
       [MissionStatus.IN_PROGRESS]: 'En cours',
       [MissionStatus.COMPLETED]: 'Terminée',
       [MissionStatus.CANCELLED]: 'Annulée',
+      [MissionStatus.EXPIRED]: 'Expirée',
       [MissionStatus.DISPUTED]: 'En litige'
     };
     return statusTexts[this.status] || 'Statut inconnu';
+  }
+
+  toJSON(): Partial<MissionStatusHistory> {
+    const result: Partial<MissionStatusHistory> = {
+      id: this.id,
+      status: this.status,
+      createdAt: this.createdAt
+    };
+    
+    if (this.comment) {
+      result.comment = this.comment;
+    }
+    
+    return result;
   }
 } 
