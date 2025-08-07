@@ -1,6 +1,5 @@
 import { Server } from 'socket.io';
 import { AppDataSource } from '../config/database';
-import { User } from '../models/User';
 import { Mission } from '../models/Mission';
 
 interface AuthenticatedSocket {
@@ -11,7 +10,7 @@ interface AuthenticatedSocket {
 export const socketHandler = (io: Server): void => {
   io.use(async (socket, next) => {
     try {
-      const token = socket.handshake.auth.token;
+      const token = socket.handshake.auth['token'];
       
       if (!token) {
         return next(new Error('Token d\'authentification manquant'));

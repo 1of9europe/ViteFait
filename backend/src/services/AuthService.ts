@@ -1,10 +1,9 @@
 import { Repository } from 'typeorm';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { AppDataSource } from '../config/database';
 import { User } from '../models/User';
 import { UserRole } from '../types/enums';
-import * as jwt from 'jsonwebtoken';
-import { SignOptions } from 'jsonwebtoken';
-import { BadRequestError, UnauthorizedError, ConflictError } from '../middleware/errorHandler';
+import { AuthenticationError, ConflictError, ValidationError } from '../utils/errors';
 
 export interface AuthResponse {
   user: Partial<User>;
@@ -45,26 +44,24 @@ export class AuthService {
   async signup(data: SignupData): Promise<AuthResponse> {
     // Vérifier si l'email existe déjà
     const existingUser = await this.userRepository.findOne({
-      where: { email: data.email.toLowerCase() }
+      where: { email: data.email }
     });
 
     if (existingUser) {
-      throw new ConflictError('EMAIL_ALREADY_EXISTS', 'Un compte avec cet email existe déjà');
+      throw new ConflictError('EMAIL_EXISTS', 'Un utilisateur avec cet email existe déjà');
     }
 
     // Créer le nouvel utilisateur
     const user = new User();
-    user.email = data.email.toLowerCase();
+    user.email = data.email;
     user.password = data.password;
     user.firstName = data.firstName;
     user.lastName = data.lastName;
     user.phone = data.phone || '';
     user.role = data.role || UserRole.CLIENT;
 
-    // Hasher le mot de passe
+    // Hasher le mot de passe et sauvegarder
     await user.hashPassword();
-
-    // Sauvegarder l'utilisateur
     const savedUser = await this.userRepository.save(user);
 
     // Générer les tokens
@@ -79,32 +76,28 @@ export class AuthService {
   }
 
   /**
-   * Connexion d'un utilisateur
+   * Connexion utilisateur
    */
   async login(data: LoginData): Promise<AuthResponse> {
-    // Rechercher l'utilisateur par email
+    // Trouver l'utilisateur par email
     const user = await this.userRepository.findOne({
-      where: { email: data.email.toLowerCase() }
+      where: { email: data.email }
     });
 
     if (!user) {
-      throw new UnauthorizedError('INVALID_CREDENTIALS', 'Email ou mot de passe incorrect');
+      throw new AuthenticationError('INVALID_CREDENTIALS', 'Email ou mot de passe incorrect');
     }
 
     // Vérifier le mot de passe
     const isValidPassword = await user.comparePassword(data.password);
     if (!isValidPassword) {
-      throw new UnauthorizedError('INVALID_CREDENTIALS', 'Email ou mot de passe incorrect');
+      throw new AuthenticationError('INVALID_CREDENTIALS', 'Email ou mot de passe incorrect');
     }
 
     // Vérifier que l'utilisateur est actif
     if (!user.isActive()) {
-      throw new UnauthorizedError('ACCOUNT_SUSPENDED', 'Compte suspendu ou inactif');
+      throw new AuthenticationError('USER_INACTIVE', 'Compte désactivé');
     }
-
-    // Mettre à jour lastSeen
-    user.lastSeen = new Date();
-    await this.userRepository.save(user);
 
     // Générer les tokens
     const token = this.generateToken(user);
@@ -122,14 +115,15 @@ export class AuthService {
    */
   async refreshToken(refreshToken: string): Promise<AuthResponse> {
     try {
-      const decoded = jwt.verify(refreshToken, process.env['JWT_REFRESH_SECRET']!) as TokenPayload;
-      
+      const secret = process.env['JWT_REFRESH_SECRET']!;
+      const decoded = jwt.verify(refreshToken, secret) as TokenPayload;
+
       const user = await this.userRepository.findOne({
         where: { id: decoded.userId }
       });
 
       if (!user || !user.isActive()) {
-        throw new UnauthorizedError('INVALID_REFRESH_TOKEN', 'Token de rafraîchissement invalide');
+        throw new AuthenticationError('INVALID_REFRESH_TOKEN', 'Token de rafraîchissement invalide');
       }
 
       // Générer de nouveaux tokens
@@ -142,31 +136,32 @@ export class AuthService {
         refreshToken: newRefreshToken
       };
     } catch (error) {
-      throw new UnauthorizedError('INVALID_REFRESH_TOKEN', 'Token de rafraîchissement invalide');
+      throw new AuthenticationError('INVALID_REFRESH_TOKEN', 'Token de rafraîchissement invalide');
     }
   }
 
   /**
-   * Valider un token JWT et retourner l'utilisateur
+   * Valider un token JWT
    */
   async validateToken(token: string): Promise<User> {
     try {
-      const decoded = jwt.verify(token, process.env['JWT_SECRET']!) as TokenPayload;
-      
+      const secret = process.env['JWT_SECRET']!;
+      const decoded = jwt.verify(token, secret) as TokenPayload;
+
       const user = await this.userRepository.findOne({
         where: { id: decoded.userId }
       });
 
       if (!user || !user.isActive()) {
-        throw new UnauthorizedError('INVALID_TOKEN', 'Token invalide ou utilisateur inactif');
+        throw new AuthenticationError('INVALID_TOKEN', 'Token invalide ou utilisateur inactif');
       }
 
       return user;
     } catch (error) {
-      if (error instanceof jwt.TokenExpiredError) {
-        throw new UnauthorizedError('TOKEN_EXPIRED', 'Token expiré');
+      if (error instanceof Error && error.name === 'TokenExpiredError') {
+        throw new AuthenticationError('TOKEN_EXPIRED', 'Token expiré');
       }
-      throw new UnauthorizedError('INVALID_TOKEN', 'Token invalide');
+      throw new AuthenticationError('INVALID_TOKEN', 'Token invalide');
     }
   }
 
@@ -179,7 +174,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedError('USER_NOT_FOUND', 'Utilisateur non trouvé');
+      throw new AuthenticationError('USER_NOT_FOUND', 'Utilisateur non trouvé');
     }
 
     return user.toJSON();
@@ -194,7 +189,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedError('USER_NOT_FOUND', 'Utilisateur non trouvé');
+      throw new AuthenticationError('USER_NOT_FOUND', 'Utilisateur non trouvé');
     }
 
     // Mettre à jour les champs autorisés
@@ -219,13 +214,13 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedError('USER_NOT_FOUND', 'Utilisateur non trouvé');
+      throw new AuthenticationError('USER_NOT_FOUND', 'Utilisateur non trouvé');
     }
 
     // Vérifier l'ancien mot de passe
     const isValidPassword = await user.comparePassword(currentPassword);
     if (!isValidPassword) {
-      throw new BadRequestError('INVALID_PASSWORD', 'Mot de passe actuel incorrect');
+      throw new ValidationError('INVALID_PASSWORD', 'Mot de passe actuel incorrect');
     }
 
     // Mettre à jour le mot de passe
@@ -261,8 +256,9 @@ export class AuthService {
     };
 
     const secret = process.env['JWT_REFRESH_SECRET']!;
+    const expiresIn = process.env['JWT_REFRESH_EXPIRES_IN'] || '7d';
 
-    return jwt.sign(payload, secret, { expiresIn: '7d' } as SignOptions);
+    return jwt.sign(payload, secret, { expiresIn } as SignOptions);
   }
 }
 

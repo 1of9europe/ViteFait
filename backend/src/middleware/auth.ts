@@ -46,6 +46,31 @@ export const authMiddleware = async (
 
     const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
     
+    // En mode développement sans base de données, créer un utilisateur factice
+    if (process.env['NODE_ENV'] === 'development' && process.env['DB_IN_MEMORY'] === 'true') {
+      const mockUser = {
+        id: decoded.userId,
+        email: decoded.email,
+        firstName: 'Test',
+        lastName: 'User',
+        role: decoded.role,
+        isActive: () => true,
+        isClient: () => decoded.role === 'client',
+        isAssistant: () => decoded.role === 'assistant',
+        toJSON: () => ({
+          id: decoded.userId,
+          email: decoded.email,
+          firstName: 'Test',
+          lastName: 'User',
+          role: decoded.role
+        })
+      } as any;
+      
+      req.user = mockUser;
+      next();
+      return;
+    }
+    
     const userRepository = AppDataSource.getRepository(User);
     const user = await userRepository.findOne({
       where: { id: decoded.userId }

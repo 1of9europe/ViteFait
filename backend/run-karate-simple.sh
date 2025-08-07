@@ -10,6 +10,9 @@ BASE_URL="http://localhost:3000"
 REPORT_DIR="karate-simple-reports"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
+# Variable globale pour stocker le token
+AUTH_TOKEN=""
+
 # Couleurs pour l'affichage
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -34,6 +37,12 @@ log_error() {
     echo -e "${RED}❌ $1${NC}"
 }
 
+# Fonction pour extraire le token de la réponse JSON
+extract_token() {
+    local response=$1
+    echo "$response" | grep -o '"token":"[^"]*"' | cut -d'"' -f4
+}
+
 # Fonction pour tester une requête
 test_request() {
     local method=$1
@@ -41,23 +50,47 @@ test_request() {
     local data=$3
     local expected_status=$4
     local test_name=$5
+    local extract_token_flag=$6
     
     log_info "Test: $test_name"
     log_info "  $method $endpoint"
     
+    local response=""
+    
     if [ "$method" = "GET" ]; then
-        response=$(curl -s -w "\n%{http_code}" "$BASE_URL$endpoint" -H "Authorization: Bearer test-jwt-token")
+        if [ -n "$AUTH_TOKEN" ]; then
+            response=$(curl -s -w "\n%{http_code}" "$BASE_URL$endpoint" \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $AUTH_TOKEN")
+        else
+            response=$(curl -s -w "\n%{http_code}" "$BASE_URL$endpoint" \
+                -H "Content-Type: application/json")
+        fi
     elif [ "$method" = "POST" ]; then
-        response=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL$endpoint" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer test-jwt-token" \
-            -d "$data")
+        if [ -n "$AUTH_TOKEN" ]; then
+            response=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL$endpoint" \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $AUTH_TOKEN" \
+                -d "$data")
+        else
+            response=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL$endpoint" \
+                -H "Content-Type: application/json" \
+                -d "$data")
+        fi
     fi
     
     # Extraire le code de statut (dernière ligne)
     status_code=$(echo "$response" | tail -n1)
     # Extraire le corps de la réponse (toutes les lignes sauf la dernière)
     body=$(echo "$response" | sed '$d')
+    
+    # Extraire le token si demandé
+    if [ "$extract_token_flag" = "true" ] && [ "$status_code" = "200" ]; then
+        AUTH_TOKEN=$(extract_token "$body")
+        if [ -n "$AUTH_TOKEN" ]; then
+            log_success "  Token extrait et stocké"
+        fi
+    fi
     
     if [ "$status_code" = "$expected_status" ]; then
         log_success "  Status: $status_code (attendu: $expected_status)"
@@ -99,15 +132,15 @@ test_auth() {
     # Test d'inscription
     test_request "POST" "/api/auth/signup" \
         '{"email":"test@example.com","password":"password123","firstName":"Test","lastName":"User"}' \
-        "201" "Inscription utilisateur"
+        "201" "Inscription utilisateur" "false"
     
     # Test de connexion
     test_request "POST" "/api/auth/login" \
         '{"email":"test@example.com","password":"password123"}' \
-        "200" "Connexion utilisateur"
+        "200" "Connexion utilisateur" "true"
     
     # Test de profil utilisateur
-    test_request "GET" "/api/auth/me" "" "200" "Récupération profil utilisateur"
+    test_request "GET" "/api/auth/me" "" "200" "Récupération profil utilisateur" "false"
 }
 
 # Tests de missions
@@ -117,13 +150,13 @@ test_missions() {
     # Test de création de mission
     test_request "POST" "/api/missions" \
         '{"title":"Mission test","description":"Description test","pickupLatitude":48.8566,"pickupLongitude":2.3522,"pickupAddress":"123 Test Street","timeWindowStart":"2024-12-01T10:00:00Z","timeWindowEnd":"2024-12-01T12:00:00Z","priceEstimate":100}' \
-        "201" "Création de mission"
+        "201" "Création de mission" "false"
     
     # Test de récupération de mission
-    test_request "GET" "/api/missions/test-mission-id" "" "200" "Récupération mission par ID"
+    test_request "GET" "/api/missions/test-mission-id" "" "200" "Récupération mission par ID" "false"
     
     # Test de liste des missions
-    test_request "GET" "/api/missions" "" "200" "Liste des missions"
+    test_request "GET" "/api/missions" "" "200" "Liste des missions" "false"
 }
 
 # Tests de paiements
@@ -133,25 +166,26 @@ test_payments() {
     # Test de création d'intent de paiement
     test_request "POST" "/api/payments/create-intent" \
         '{"missionId":"test-mission-id","amount":100}' \
-        "201" "Création intent de paiement"
+        "201" "Création intent de paiement" "false"
     
     # Test de confirmation de paiement
     test_request "POST" "/api/payments/confirm" \
         '{"paymentIntentId":"test-payment-intent-id","missionId":"test-mission-id"}' \
-        "200" "Confirmation de paiement"
+        "200" "Confirmation de paiement" "false"
 }
 
 # Tests d'erreurs
 test_errors() {
     log_info "🧪 Tests d'erreurs"
     
-    # Test sans token
-    test_request "GET" "/api/auth/me" "" "401" "Accès sans token"
+    # Test sans token - réinitialiser le token
+    AUTH_TOKEN=""
+    test_request "GET" "/api/auth/me" "" "401" "Accès sans token" "false"
     
     # Test avec données manquantes
     test_request "POST" "/api/auth/signup" \
         '{"email":"test@example.com"}' \
-        "400" "Inscription avec données manquantes"
+        "400" "Inscription avec données manquantes" "false"
 }
 
 # Générer le rapport HTML

@@ -6,7 +6,7 @@ import { ValidationError } from '../utils/errors';
  * Middleware pour valider les données de requête avec un schéma Joi
  */
 export const validateSchema = (schema: Joi.Schema, location: 'body' | 'query' | 'params' = 'body') => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, _res: Response, next: NextFunction) => {
     const data = req[location];
     
     const { error, value } = schema.validate(data, {
@@ -60,7 +60,7 @@ export const validateFile = (options: {
   allowedMimeTypes?: string[];
   required?: boolean;
 }) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, _res: Response, next: NextFunction) => {
     const { fieldName, maxSize = 5 * 1024 * 1024, allowedMimeTypes = [], required = false } = options;
     
     const file = req.file || (req.files && (req.files as any)[fieldName]);

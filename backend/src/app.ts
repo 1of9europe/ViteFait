@@ -1,4 +1,9 @@
 import 'reflect-metadata';
+import dotenv from 'dotenv';
+
+// Charger les variables d'environnement AVANT tout autre import
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -7,7 +12,6 @@ import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import dotenv from 'dotenv';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 
@@ -16,13 +20,10 @@ import { authRoutes } from './routes/auth';
 import { missionRoutes } from './routes/missions';
 import { userRoutes } from './routes/users';
 import { paymentRoutes } from './routes/payments';
-import { reviewRoutes } from './routes/reviews';
+// import { reviewRoutes } from './routes/reviews';
 import { errorHandler } from './middleware/errorHandler';
 import { authMiddleware } from './middleware/auth';
 import { socketHandler } from './services/socketHandler';
-
-// Charger les variables d'environnement
-dotenv.config();
 
 // Vérification des secrets JWT obligatoires
 if (!process.env['JWT_SECRET'] || !process.env['JWT_REFRESH_SECRET']) {
@@ -99,7 +100,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/missions', authMiddleware, missionRoutes);
 app.use('/api/users', authMiddleware, userRoutes);
 app.use('/api/payments', authMiddleware, paymentRoutes);
-app.use('/api/reviews', authMiddleware, reviewRoutes);
+// app.use('/api/reviews', authMiddleware, reviewRoutes);
 
 // Gestion des erreurs
 app.use(errorHandler);
