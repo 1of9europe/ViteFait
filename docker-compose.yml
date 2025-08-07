@@ -1,20 +1,22 @@
 version: '3.8'
-services:
-  db:
-    image: postgres:15
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: vitefait
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
-volumes:
-  postgres_data: 
+services:
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_APP_ENV=dev
+      - NEXT_PUBLIC_API_BASE_URL=http://host.docker.internal:3001
+    volumes:
+      - ./web:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - vitefait-network
+
+networks:
+  vitefait-network:
+    driver: bridge 

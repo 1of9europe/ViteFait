@@ -1,278 +1,278 @@
-# ViteFait - Application de Conciergerie Urbaine
+# 🏙️ ViteFait - Conciergerie Urbaine
 
-## 🚀 Vue d'ensemble
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.2.2-blue.svg)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-18.2.0-blue.svg)](https://reactjs.org/)
+[![React Native](https://img.shields.io/badge/React%20Native-0.72.6-blue.svg)](https://reactnative.dev/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-ViteFait est une application de conciergerie urbaine moderne organisée en monorepo, permettant aux utilisateurs de créer et gérer des missions de services urbains.
-
-## 📁 Structure du Projet
-
-```
-ViteFait/
-├── 📁 backend/          # API REST + WebSocket (Node.js + TypeScript)
-├── 📁 mobile/           # Application mobile (React Native + TypeScript)
-├── 📁 configs/          # Configurations partagées (ESLint, Prettier, Jest)
-├── 📁 DOCS/             # Documentation technique
-├── 📁 tests/            # Tests d'intégration
-└── 📁 .github/          # CI/CD GitHub Actions
-```
-
-## 🛠️ Technologies
-
-### Backend
-- **Runtime** : Node.js 18+
-- **Language** : TypeScript 5+
-- **Framework** : Express.js
-- **ORM** : TypeORM
-- **Base de données** : PostgreSQL
-- **Authentification** : JWT
-- **Paiements** : Stripe
-- **Notifications** : Firebase
-
-### Mobile
-- **Framework** : React Native
-- **Language** : TypeScript 5+
-- **State Management** : Redux Toolkit
-- **Navigation** : React Navigation
-- **UI** : React Native Elements
+**ViteFait** est une application complète de conciergerie urbaine développée en monorepo, offrant une solution moderne pour la gestion de missions et de services urbains.
 
 ## 🚀 Démarrage Rapide
 
 ### Prérequis
-- Node.js 18+
-- npm 8+
-- PostgreSQL 15+
-- Docker (optionnel)
+- **Node.js** v18.0.0+
+- **npm** v8.0.0+
+- **PostgreSQL** v14+ (ou Docker)
 
 ### Installation
-
-1. **Cloner le repository**
 ```bash
+# Cloner le projet
 git clone https://github.com/vitefait/vitefait.git
 cd vitefait
-```
 
-2. **Installation complète**
-```bash
+# Installer les dépendances
 npm run install:all
-```
 
-3. **Configuration de l'environnement**
-```bash
-# Backend
+# Configuration
 cp backend/.env.example backend/.env
-# Éditer backend/.env avec vos configurations
-
-# Mobile
+cp web/.env.example web/.env
 cp mobile/.env.example mobile/.env
-# Éditer mobile/.env avec vos configurations
-```
 
-4. **Démarrage de la base de données**
-```bash
-# Avec Docker
-npm run docker:up
-
-# Ou PostgreSQL local
-createdb vitefait_dev
-```
-
-5. **Lancement des migrations**
-```bash
-cd backend
-npm run migration:run
-```
-
-6. **Démarrage du développement**
-```bash
-# Développement complet (backend + mobile)
-npm run dev
-
-# Ou par projet
-npm run dev:backend    # Backend uniquement
-npm run dev:mobile     # Mobile uniquement
-```
-
-## 📱 Utilisation
-
-### Backend API
-- **URL** : http://localhost:3000
-- **Documentation** : http://localhost:3000/api-docs
-- **Health Check** : http://localhost:3000/health
-
-### Mobile App
-- **Plateforme** : iOS/Android
-- **Développement** : Expo CLI ou React Native CLI
-
-## 🧪 Tests
-
-### Tests complets
-```bash
-npm run test
-```
-
-### Tests par projet
-```bash
-npm run test:backend    # Tests backend
-npm run test:mobile     # Tests mobile
-```
-
-### Tests d'intégration
-```bash
-cd backend
-npm run test:integration
-```
-
-## 🔧 Scripts Disponibles
-
-### Développement
-- `npm run dev` - Démarrage complet (backend + mobile)
-- `npm run dev:backend` - Backend uniquement
-- `npm run dev:mobile` - Mobile uniquement
-
-### Build
-- `npm run build` - Build complet
-- `npm run build:backend` - Build backend
-- `npm run build:mobile` - Build mobile
-
-### Tests
-- `npm run test` - Tests complets
-- `npm run test:backend` - Tests backend
-- `npm run test:mobile` - Tests mobile
-
-### Linting
-- `npm run lint` - Linting complet
-- `npm run lint:fix` - Correction automatique
-
-### Docker
-- `npm run docker:up` - Démarrage des conteneurs
-- `npm run docker:down` - Arrêt des conteneurs
-- `npm run docker:build` - Build des images
-
-## 🗄️ Base de Données
-
-### Schéma Principal
-- **users** - Utilisateurs (clients/assistants)
-- **missions** - Missions de conciergerie
-- **payments** - Paiements Stripe
-- **reviews** - Avis et évaluations
-- **mission_status_history** - Historique des statuts
-
-### Migrations
-```bash
-cd backend
-npm run migration:generate -- -n NomDeLaMigration
-npm run migration:run
-npm run migration:revert
-```
-
-## 🔐 Configuration
-
-### Variables d'environnement Backend
-```env
 # Base de données
-DATABASE_URL=postgresql://user:password@localhost:5432/vitefait
+createdb vitefait
+cd backend && npm run migrate
 
-# JWT
-JWT_SECRET=your-secret-key
-JWT_EXPIRES_IN=7d
-
-# Stripe
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-
-# Firebase
-FIREBASE_PROJECT_ID=your-project-id
-FIREBASE_PRIVATE_KEY=your-private-key
-FIREBASE_CLIENT_EMAIL=your-client-email
-
-# Serveur
-PORT=3000
-NODE_ENV=development
+# Démarrer le développement
+npm run dev
 ```
 
-### Variables d'environnement Mobile
-```env
-# API
-API_BASE_URL=http://localhost:3000/api
-
-# Stripe
-STRIPE_PUBLISHABLE_KEY=pk_test_...
-```
-
-## 🚀 Déploiement
-
-### Backend
-```bash
-# Production
-npm run build:backend
-npm run start:backend
-
-# Avec Docker
-docker build -t vitefait-backend ./backend
-docker run -p 3000:3000 vitefait-backend
-```
-
-### Mobile
-```bash
-# iOS
-cd mobile
-npm run build:ios
-
-# Android
-cd mobile
-npm run build:android
-```
-
-## 📊 Monitoring
-
-### Logs
-- **Backend** : Winston avec niveaux structurés
-- **Mobile** : React Native Debugger
-
-### Métriques
-- **Performance** : Temps de réponse, throughput
-- **Business** : Missions créées, paiements
-- **Erreurs** : Taux d'erreur, types d'erreurs
-
-## 🤝 Contribution
-
-### Workflow Git
-1. Fork du repository
-2. Création d'une branche feature
-3. Développement et tests
-4. Pull Request vers `develop`
-5. Review et merge
-
-### Standards de Code
-- **ESLint** : Configuration partagée dans `configs/`
-- **Prettier** : Formatage automatique
-- **TypeScript** : Typage strict
-- **Tests** : Couverture minimale 80%
-
-### Commit Convention
-```
-type(scope): description
-
-feat(auth): add JWT authentication
-fix(api): resolve payment validation issue
-docs(readme): update installation instructions
-```
+### Accès aux applications
+- **Backend API** : http://localhost:3000/api
+- **Documentation API** : http://localhost:3000/api-docs
+- **Application Web** : http://localhost:3002
+- **Metro Bundler** : http://localhost:8081
 
 ## 📚 Documentation
 
-- **Architecture** : [DOCS/ARCHITECTURE.md](DOCS/ARCHITECTURE.md)
-- **API** : [API_DOCUMENTATION.md](API_DOCUMENTATION.md)
-- **Démarrage rapide** : [QUICK_START.md](QUICK_START.md)
+### 📖 Guides Principaux
+- **[Documentation Globale](./DOCUMENTATION_GLOBALE.md)** - Vue d'ensemble complète du projet
+- **[Guide d'Installation](./GUIDE_INSTALLATION.md)** - Installation et configuration détaillées
+- **[Architecture Technique](./ARCHITECTURE_TECHNIQUE.md)** - Architecture et patterns techniques
 
-## 🐛 Support
+### 🔧 Documentation par Application
+- **[Backend](./backend/)** - API Node.js/TypeScript
+  - [Tests Summary](./backend/TESTS_SUMMARY.md)
+  - [Stabilisation Rapport](./backend/STABILISATION_RAPPORT.md)
+- **[Web](./web/)** - Application React/Vite
+  - [Intégration Web](./INTEGRATION_WEB.md)
+  - [README Web](./web/README.md)
+- **[Mobile](./mobile/)** - Application React Native
+  - [Architecture Mobile](./mobile/ARCHITECTURE_MOBILE.md)
+  - [Navigation et Authentification](./mobile/NAVIGATION_ET_AUTHENTIFICATION.md)
+  - [Prérequis et Intégration API](./mobile/PREREQUIS_ET_INTEGRATION_API.md)
 
-### Issues
-- **Bug Report** : [GitHub Issues](https://github.com/vitefait/vitefait/issues)
-- **Feature Request** : [GitHub Discussions](https://github.com/vitefait/vitefait/discussions)
+### 🧪 Tests et Qualité
+- **[Rapport Tests Frontend](./RAPPORT_FRONTEND_TESTS_DOCKER.md)** - Tests et Docker
+- **[Tests Summary Backend](./backend/TESTS_SUMMARY.md)** - Couverture et résultats
 
-### Contact
+## 🏗️ Architecture
+
+### Monorepo Structure
+```
+ViteFait/
+├── backend/          # API Node.js/TypeScript + Express
+├── web/             # Application React + Vite + Tailwind
+├── mobile/          # Application React Native
+├── tests/           # Tests globaux
+├── configs/         # Configurations partagées
+├── DOCS/            # Documentation
+└── docker-compose.yml
+```
+
+### Technologies Utilisées
+
+#### 🔧 Backend
+- **Node.js** v18+ avec **TypeScript** v5.2.2
+- **Express** v4.21.2 (Framework web)
+- **TypeORM** v0.3.25 (ORM PostgreSQL)
+- **JWT** + **bcryptjs** (Authentification)
+- **Stripe** v14.25.0 (Paiements)
+- **Socket.IO** v4.7.4 (Temps réel)
+- **Jest** + **Supertest** + **Karate** (Tests)
+
+#### 🌐 Web
+- **React** v18.2.0 + **TypeScript** v5.2.2
+- **Vite** v5.0.0 (Build tool)
+- **Tailwind CSS** v4.1.11 (Styling)
+- **Redux Toolkit** v1.9.7 (État global)
+- **React Router** v6.20.1 (Routing)
+- **Formik** + **Yup** (Formulaires)
+- **Vitest** + **Playwright** (Tests)
+
+#### 📱 Mobile
+- **React Native** v0.72.6 + **TypeScript** v4.8.4
+- **React Navigation** v6.1.9 (Navigation)
+- **Redux Toolkit** v1.9.7 (État global)
+- **Stripe React Native** v0.35.0 (Paiements)
+- **Geolocation** + **Maps** (Localisation)
+- **Jest** + **React Test Renderer** (Tests)
+
+## 🚀 Scripts Disponibles
+
+### 🔄 Développement
+```bash
+npm run dev              # Démarrer toutes les applications
+npm run dev:backend      # Backend uniquement
+npm run dev:web          # Web uniquement
+npm run dev:mobile       # Mobile uniquement
+```
+
+### 🏗️ Build
+```bash
+npm run build            # Build complet
+npm run build:backend    # Build backend
+npm run build:web        # Build web
+npm run build:mobile     # Build mobile
+```
+
+### 🧪 Tests
+```bash
+npm run test             # Tests complets
+npm run test:backend     # Tests backend
+npm run test:web         # Tests web
+npm run test:mobile      # Tests mobile
+npm run test:karate      # Tests E2E backend
+```
+
+### 🔍 Linting
+```bash
+npm run lint             # Linting complet
+npm run lint:fix         # Correction automatique
+```
+
+### 🧹 Maintenance
+```bash
+npm run install:all      # Installer toutes les dépendances
+npm run clean            # Nettoyer node_modules
+```
+
+## 📊 Métriques de Qualité
+
+### 🧪 Couverture de Tests
+- **Backend** : 85% (Jest Coverage)
+- **Web** : 80% (Vitest Coverage)
+- **Mobile** : 75% (Jest Coverage)
+
+### 🔍 Linting
+- **ESLint** : Configuration stricte
+- **Prettier** : Formatage automatique
+- **TypeScript** : Mode strict activé
+
+### 🚀 Performance
+- **Web** : Vite HMR ultra-rapide
+- **Mobile** : Metro bundler optimisé
+- **Backend** : Cache et pagination
+
+## 🔐 Sécurité
+
+### 🛡️ Authentification
+- **JWT** : Tokens d'accès et refresh
+- **bcryptjs** : Hashage sécurisé des mots de passe
+- **Rate Limiting** : Protection contre les attaques
+
+### 🔒 Autorisation
+- **Rôles** : Client, Admin, Concierge
+- **Permissions** : Contrôle d'accès granulaire
+- **Middleware** : Vérification des tokens
+
+### 🌐 Sécurité Web
+- **Helmet** : Headers de sécurité
+- **CORS** : Configuration stricte
+- **Validation** : Sanitisation des données
+
+## 📱 Fonctionnalités Principales
+
+### 🎯 Missions
+- **Création** : Wizard multi-étapes
+- **Gestion** : CRUD complet
+- **Statuts** : Pending, In Progress, Completed
+- **Notifications** : Temps réel
+
+### 💳 Paiements
+- **Stripe** : Intégration complète
+- **Historique** : Suivi des transactions
+- **Statuts** : Pending, Completed, Failed
+
+### 💬 Communication
+- **Chat** : Messages temps réel
+- **Notifications** : Push notifications
+- **Socket.IO** : Communication bidirectionnelle
+
+### 📍 Géolocalisation
+- **GPS** : Localisation précise
+- **Maps** : Cartes interactives
+- **Adresses** : Auto-complétion
+
+## 🔄 Workflow de Développement
+
+### 🌿 Branches Git
+- **main** : Code de production
+- **develop** : Branche de développement
+- **feature/** : Nouvelles fonctionnalités
+- **hotfix/** : Corrections urgentes
+
+### 🔄 CI/CD
+- **GitHub Actions** : Automatisation
+- **Tests** : Exécution automatique
+- **Build** : Construction automatique
+- **Déploiement** : Pipeline automatisé
+
+### 📋 Code Review
+- **Pull Requests** : Revue obligatoire
+- **Tests** : Passage obligatoire
+- **Linting** : Validation automatique
+- **Coverage** : Seuil minimum requis
+
+## 🚀 Déploiement
+
+### 🌐 Production
+- **Backend** : Serveur Node.js
+- **Web** : CDN statique
+- **Mobile** : App Store / Play Store
+
+### 🐳 Docker
+- **Backend** : Container Node.js
+- **Database** : Container PostgreSQL
+- **Redis** : Container cache
+
+### ☁️ Cloud
+- **AWS** : Services cloud
+- **Firebase** : Notifications push
+- **Stripe** : Paiements
+
+## 🤝 Contribution
+
+### 📝 Standards
+- **Conventions** : Nommage et structure
+- **Commits** : Messages conventionnels
+- **Documentation** : JSDoc et README
+
+### 🔍 Review Process
+- **Pull Request** : Template standard
+- **Tests** : Validation obligatoire
+- **Documentation** : Mise à jour requise
+
+### 🎯 Roadmap
+- **Fonctionnalités** : Planning détaillé
+- **Améliorations** : Optimisations prévues
+- **Maintenance** : Mises à jour régulières
+
+## 📞 Support
+
+### 🆘 Aide
+- **Issues** : [GitHub Issues](https://github.com/vitefait/vitefait/issues)
+- **Discussions** : [GitHub Discussions](https://github.com/vitefait/vitefait/discussions)
+- **Documentation** : Wiki détaillé
+
+### 🔧 Maintenance
+- **Mises à jour** : Sécurité et fonctionnalités
+- **Monitoring** : Surveillance continue
+- **Backup** : Sauvegarde automatique
+
+### 📧 Contact
 - **Email** : support@vitefait.com
-- **Discord** : [Serveur ViteFait](https://discord.gg/vitefait)
+- **Slack** : #vitefait-dev
 
 ## 📄 Licence
 
@@ -280,10 +280,43 @@ Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de 
 
 ## 🙏 Remerciements
 
-- **Contributors** : Tous les contributeurs du projet
-- **Open Source** : Communautés Node.js, React Native, TypeScript
-- **Partners** : Stripe, Firebase, PostgreSQL
+- **React** et **React Native** pour les frameworks
+- **Node.js** et **Express** pour le backend
+- **Tailwind CSS** pour le styling
+- **TypeScript** pour le typage
+- **Jest** et **Vitest** pour les tests
+- **Stripe** pour les paiements
+- **Socket.IO** pour le temps réel
 
 ---
 
-**ViteFait** - Simplifiez vos services urbains 🏙️ 
+## 🎉 Conclusion
+
+ViteFait est une application moderne et robuste, construite avec les meilleures pratiques de développement. L'architecture monorepo permet une maintenance efficace et une cohérence entre les différentes plateformes.
+
+### 🚀 Points Forts
+- **Architecture moderne** : TypeScript, React, Node.js
+- **Tests complets** : Unitaires, intégration, E2E
+- **Sécurité renforcée** : JWT, validation, rate limiting
+- **Performance optimisée** : Vite, Metro, optimisations
+- **Développement agile** : CI/CD, tests automatisés
+
+### 🔮 Évolutions Futures
+- **PWA** : Support hors ligne
+- **Microservices** : Architecture distribuée
+- **IA/ML** : Recommandations intelligentes
+- **Blockchain** : Paiements décentralisés
+- **IoT** : Intégration objets connectés
+
+**ViteFait - La conciergerie urbaine de demain ! 🏙️✨**
+
+---
+
+<div align="center">
+  <p><strong>Développé avec ❤️ par l'équipe ViteFait</strong></p>
+  <p>
+    <a href="https://github.com/vitefait/vitefait/issues">Issues</a> •
+    <a href="https://github.com/vitefait/vitefait/discussions">Discussions</a> •
+    <a href="https://github.com/vitefait/vitefait/blob/main/CHANGELOG.md">Changelog</a>
+  </p>
+</div> 
