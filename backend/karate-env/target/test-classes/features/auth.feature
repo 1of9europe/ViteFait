@@ -2,7 +2,7 @@ Feature: Authentification API
 
 Background:
   * url baseUrl + apiPath
-  * def authUtils = read('classpath:tests/karate/utils/auth-utils.js')
+  * def authUtils = read('classpath:utils/auth-utils.js')
 
 Scenario: Inscription d'un nouveau client
   Given path '/auth/signup'
@@ -27,7 +27,7 @@ Scenario: Connexion avec des identifiants valides
   Given path '/auth/login'
   And def userData = authUtils.generateTestUser('CLIENT')
   # Créer l'utilisateur d'abord
-  And def signupResponse = call read('classpath:tests/karate/features/auth-signup.feature@signup') { userData: userData }
+  And def signupResponse = call read('classpath:features/auth-signup.feature@signup') { userData: userData }
   And request { email: userData.email, password: userData.password }
   When method POST
   Then status 200
@@ -64,7 +64,7 @@ Scenario: Inscription avec email déjà existant
   Given path '/auth/signup'
   And def userData = authUtils.generateTestUser('CLIENT')
   # Première inscription
-  And def firstSignup = call read('classpath:tests/karate/features/auth-signup.feature@signup') { userData: userData }
+  And def firstSignup = call read('classpath:features/auth-signup.feature@signup') { userData: userData }
   # Deuxième inscription avec le même email
   And request userData
   When method POST

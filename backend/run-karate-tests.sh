@@ -46,21 +46,29 @@ check_and_install_maven() {
     echo "✅ Maven disponible: $(mvn --version | head -n 1)"
 }
 
-# Fonction pour vérifier Java
+# Fonction pour vérifier et configurer Java 17
 check_java() {
+    # Charger SDKMAN! si disponible
+    if [ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]; then
+        source "$HOME/.sdkman/bin/sdkman-init.sh"
+        echo "📦 SDKMAN! détecté, utilisation de Java 17..."
+        sdk use java 17.0.8-tem
+    fi
+    
     if ! command -v java &> /dev/null; then
         echo "❌ Java non trouvé"
-        echo "Installez Java 11+ manuellement"
+        echo "Installez Java 17+ avec: curl -s 'https://get.sdkman.io' | bash && sdk install java 17.0.8-tem"
         exit 1
     fi
     
     JAVA_VERSION=$(java -version 2>&1 | head -n 1 | cut -d'"' -f2 | cut -d'.' -f1)
-    if [ "$JAVA_VERSION" -lt 11 ]; then
-        echo "❌ Java $JAVA_VERSION détecté, Java 11+ requis"
+    if [ "$JAVA_VERSION" -lt 17 ]; then
+        echo "❌ Java $JAVA_VERSION détecté, Java 17+ requis"
+        echo "Mettez à jour avec: sdk use java 17.0.8-tem"
         exit 1
     fi
     
-    echo "✅ Java disponible: $(java -version 2>&1 | head -n 1)"
+    echo "✅ Java 17 disponible: $(java -version 2>&1 | head -n 1)"
 }
 
 # Fonction pour nettoyer les données de test
@@ -81,12 +89,13 @@ run_tests_with_maven() {
     
     # Configuration de l'environnement
     export KARATE_ENV=$ENV
+    export JAVA_HOME=$(java -XshowSettings:properties -version 2>&1 > /dev/null | grep 'java.home' | awk '{print $3}')
     
     # Lancer les tests avec Maven
     if [ "$feature_path" = "all" ]; then
-        mvn test -Dkarate.options="--output $output_dir"
+        mvn test -Dkarate.options="--output $output_dir --threads $PARALLEL_THREADS"
     else
-        mvn test -Dkarate.options="--output $output_dir" -Dtest="$feature_path"
+        mvn test -Dkarate.options="--output $output_dir --threads $PARALLEL_THREADS" -Dtest="$feature_path"
     fi
     
     cd ..
