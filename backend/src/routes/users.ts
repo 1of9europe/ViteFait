@@ -19,18 +19,7 @@ const updateProfileSchema = Joi.object({
   fcmToken: Joi.string().optional()
 });
 
-/**
- * @swagger
- * /api/users/profile:
- *   get:
- *     summary: Récupérer le profil de l'utilisateur connecté
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Profil utilisateur
- */
+// Récupérer le profil de l'utilisateur connecté
 router.get('/profile', async (req: Request, res: Response) => {
   try {
     if (!req.user) {
@@ -40,59 +29,19 @@ router.get('/profile', async (req: Request, res: Response) => {
       });
     }
 
-    res.json({
+    return res.json({
       user: req.user.toJSON()
     });
   } catch (error) {
     console.error('Erreur lors de la récupération du profil:', error);
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Erreur interne du serveur',
       message: 'Une erreur est survenue lors de la récupération du profil'
     });
   }
 });
 
-/**
- * @swagger
- * /api/users/profile:
- *   put:
- *     summary: Mettre à jour le profil de l'utilisateur connecté
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               firstName:
- *                 type: string
- *               lastName:
- *                 type: string
- *               phone:
- *                 type: string
- *               address:
- *                 type: string
- *               city:
- *                 type: string
- *               postalCode:
- *                 type: string
- *               bio:
- *                 type: string
- *               latitude:
- *                 type: number
- *               longitude:
- *                 type: number
- *               fcmToken:
- *                 type: string
- *     responses:
- *       200:
- *         description: Profil mis à jour avec succès
- *       400:
- *         description: Données invalides
- */
+// Mettre à jour le profil de l'utilisateur connecté
 router.put('/profile', async (req: Request, res: Response) => {
   try {
     if (!req.user) {
@@ -116,48 +65,34 @@ router.put('/profile', async (req: Request, res: Response) => {
     Object.assign(req.user, value);
     const updatedUser = await userRepository.save(req.user);
 
-    res.json({
+    return res.json({
       message: 'Profil mis à jour avec succès',
       user: updatedUser.toJSON()
     });
   } catch (error) {
     console.error('Erreur lors de la mise à jour du profil:', error);
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Erreur interne du serveur',
       message: 'Une erreur est survenue lors de la mise à jour du profil'
     });
   }
 });
 
-/**
- * @swagger
- * /api/users/{id}:
- *   get:
- *     summary: Récupérer le profil d'un utilisateur par ID
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: ID de l'utilisateur
- *     responses:
- *       200:
- *         description: Profil utilisateur
- *       404:
- *         description: Utilisateur non trouvé
- */
+// Récupérer le profil d'un utilisateur par ID
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({
+        error: 'ID manquant',
+        message: 'L\'ID de l\'utilisateur est requis'
+      });
+    }
 
     const userRepository = AppDataSource.getRepository(User);
     const user = await userRepository.findOne({
       where: { id },
-      select: ['id', 'firstName', 'lastName', 'rating', 'reviewCount', 'bio', 'profilePicture', 'isVerified', 'createdAt']
+      select: ['id', 'firstName', 'lastName', 'email', 'role', 'createdAt']
     });
 
     if (!user) {
@@ -167,10 +102,10 @@ router.get('/:id', async (req: Request, res: Response) => {
       });
     }
 
-    res.json({ user });
+    return res.json({ user });
   } catch (error) {
     console.error('Erreur lors de la récupération de l\'utilisateur:', error);
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Erreur interne du serveur',
       message: 'Une erreur est survenue lors de la récupération de l\'utilisateur'
     });

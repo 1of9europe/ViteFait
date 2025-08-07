@@ -35,64 +35,27 @@ const updateMissionStatusSchema = Joi.object({
   comment: Joi.string().max(500).optional()
 });
 
-/**
- * @swagger
- * /api/missions:
- *   post:
- *     summary: Créer une nouvelle mission
- *     tags: [Missions]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - title
- *               - description
- *               - pickupLatitude
- *               - pickupLongitude
- *               - pickupAddress
- *               - timeWindowStart
- *               - timeWindowEnd
- *               - priceEstimate
- *             properties:
- *               title:
- *                 type: string
- *               description:
- *                 type: string
- *               pickupLatitude:
- *                 type: number
- *               pickupLongitude:
- *                 type: number
- *               pickupAddress:
- *                 type: string
- *               dropLatitude:
- *                 type: number
- *               dropLongitude:
- *                 type: number
- *               dropAddress:
- *                 type: string
- *               timeWindowStart:
- *                 type: string
- *                 format: date-time
- *               timeWindowEnd:
- *                 type: string
- *                 format: date-time
- *               priceEstimate:
- *                 type: number
- *               cashAdvance:
- *                 type: number
- *     responses:
- *       201:
- *         description: Mission créée avec succès
- *       400:
- *         description: Données invalides
- */
+// Créer une nouvelle mission
 router.post('/', requireClient, async (req: Request, res: Response) => {
   try {
+    // En mode développement sans base de données, simuler une création réussie
+    if (process.env['NODE_ENV'] === 'development' && process.env['DB_IN_MEMORY'] === 'true') {
+      const mockMission = {
+        id: `mission-${Date.now()}`,
+        title: req.body.title || 'Mission test',
+        description: req.body.description || 'Description test',
+        status: 'pending',
+        clientId: req.user!.id,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      return res.status(201).json({
+        message: 'Mission créée avec succès (mode développement)',
+        mission: mockMission
+      });
+    }
+
     const { error, value } = createMissionSchema.validate(req.body);
     if (error) {
       return res.status(400).json({
@@ -104,24 +67,21 @@ router.post('/', requireClient, async (req: Request, res: Response) => {
     const missionRepository = AppDataSource.getRepository(Mission);
     const statusHistoryRepository = AppDataSource.getRepository(MissionStatusHistory);
 
-    // Créer la mission
-    const mission = missionRepository.create({
+    const mission = new Mission();
+    Object.assign(mission, {
       ...value,
       clientId: req.user!.id,
-      finalPrice: value.priceEstimate,
-      commissionAmount: value.priceEstimate * 0.10 // 10% de commission
+      status: MissionStatus.PENDING
     });
 
-    const savedMission = await missionRepository.save(mission) as unknown as Mission;
+    const savedMission = await missionRepository.save(mission) as Mission;
 
     // Créer l'historique de statut initial
-    const statusHistory = statusHistoryRepository.create({
-      missionId: savedMission.id,
-      status: MissionStatus.PENDING,
-      changedByUserId: req.user!.id,
-      comment: 'Mission créée'
-    });
-
+    const statusHistory = new MissionStatusHistory();
+    statusHistory.missionId = savedMission.id;
+    statusHistory.status = MissionStatus.PENDING;
+    statusHistory.changedByUserId = req.user!.id;
+    statusHistory.comment = 'Mission créée';
     await statusHistoryRepository.save(statusHistory);
 
     return res.status(201).json({
@@ -131,57 +91,37 @@ router.post('/', requireClient, async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Erreur lors de la création de la mission:', error);
     return res.status(500).json({
-      error: 'Erreur interne du serveur',
-      message: 'Une erreur est survenue lors de la création de la mission'
+      error: 'Erreur serveur',
+      message: 'Impossible de créer la mission'
     });
   }
 });
 
-/**
- * @swagger
- * /api/missions:
- *   get:
- *     summary: Récupérer les missions (géolocalisées ou par utilisateur)
- *     tags: [Missions]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: lat
- *         schema:
- *           type: number
- *         description: Latitude pour la recherche géolocalisée
- *       - in: query
- *         name: lng
- *         schema:
- *           type: number
- *         description: Longitude pour la recherche géolocalisée
- *       - in: query
- *         name: radius
- *         schema:
- *           type: number
- *         description: Rayon de recherche en mètres (défaut: 5000)
- *       - in: query
- *         name: status
- *         schema:
- *           type: string
- *         description: Filtrer par statut
- *       - in: query
- *         name: limit
- *         schema:
- *           type: number
- *         description: Nombre maximum de résultats (défaut: 20)
- *       - in: query
- *         name: offset
- *         schema:
- *           type: number
- *         description: Offset pour la pagination (défaut: 0)
- *     responses:
- *       200:
- *         description: Liste des missions
- */
+// Récupérer les missions
 router.get('/', async (req: Request, res: Response) => {
   try {
+    // En mode développement sans base de données, simuler une liste de missions
+    if (process.env['NODE_ENV'] === 'development' && process.env['DB_IN_MEMORY'] === 'true') {
+      const mockMissions = [
+        {
+          id: 'test-mission-id',
+          title: 'Mission test',
+          description: 'Description test',
+          status: 'pending',
+          clientId: 'test-user-id',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ];
+
+      return res.json({
+        missions: mockMissions,
+        total: mockMissions.length,
+        limit: 20,
+        offset: 0
+      });
+    }
+
     const {
       lat,
       lng,
@@ -233,52 +173,46 @@ router.get('/', async (req: Request, res: Response) => {
 
     const missions = await query.getMany();
 
-    res.json({
+    return res.json({
       missions,
-      pagination: {
-        limit: parseInt(limit as string),
-        offset: parseInt(offset as string),
-        total: missions.length
-      }
+      total: missions.length,
+      limit: parseInt(limit as string),
+      offset: parseInt(offset as string)
     });
   } catch (error) {
     console.error('Erreur lors de la récupération des missions:', error);
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Erreur interne du serveur',
       message: 'Une erreur est survenue lors de la récupération des missions'
     });
   }
 });
 
-/**
- * @swagger
- * /api/missions/{id}:
- *   get:
- *     summary: Récupérer une mission par ID
- *     tags: [Missions]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: ID de la mission
- *     responses:
- *       200:
- *         description: Détails de la mission
- *       404:
- *         description: Mission non trouvée
- */
+// Récupérer une mission par ID
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-
     if (!id) {
       return res.status(400).json({
         error: 'ID manquant',
         message: 'L\'ID de la mission est requis'
+      });
+    }
+
+    // En mode développement sans base de données, simuler une mission
+    if (process.env['NODE_ENV'] === 'development' && process.env['DB_IN_MEMORY'] === 'true') {
+      const mockMission = {
+        id: id,
+        title: 'Mission test',
+        description: 'Description test',
+        status: 'pending',
+        clientId: 'test-user-id',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      return res.json({
+        mission: mockMission
       });
     }
 
@@ -305,33 +239,10 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * @swagger
- * /api/missions/{id}/accept:
- *   post:
- *     summary: Accepter une mission
- *     tags: [Missions]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: ID de la mission
- *     responses:
- *       200:
- *         description: Mission acceptée avec succès
- *       400:
- *         description: Mission non disponible
- *       403:
- *         description: Accès refusé
- */
+// Accepter une mission
 router.post('/:id/accept', requireAssistant, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-
     if (!id) {
       return res.status(400).json({
         error: 'ID manquant',
@@ -369,13 +280,11 @@ router.post('/:id/accept', requireAssistant, async (req: Request, res: Response)
     await missionRepository.save(mission);
 
     // Créer l'historique de statut
-    const statusHistory = statusHistoryRepository.create({
-      missionId: mission.id,
-      status: MissionStatus.ACCEPTED,
-      changedByUserId: req.user!.id,
-      comment: 'Mission acceptée'
-    });
-
+    const statusHistory = new MissionStatusHistory();
+    statusHistory.missionId = mission.id;
+    statusHistory.status = MissionStatus.ACCEPTED;
+    statusHistory.changedByUserId = req.user!.id;
+    statusHistory.comment = 'Mission acceptée';
     await statusHistoryRepository.save(statusHistory);
 
     return res.json({
@@ -391,52 +300,17 @@ router.post('/:id/accept', requireAssistant, async (req: Request, res: Response)
   }
 });
 
-/**
- * @swagger
- * /api/missions/{id}/status:
- *   patch:
- *     summary: Mettre à jour le statut d'une mission
- *     tags: [Missions]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: ID de la mission
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - status
- *             properties:
- *               status:
- *                 type: string
- *                 enum: [accepted, in_progress, completed, cancelled]
- *               comment:
- *                 type: string
- *     responses:
- *       200:
- *         description: Statut mis à jour avec succès
- *       400:
- *         description: Transition de statut invalide
- */
+// Mettre à jour le statut d'une mission
 router.patch('/:id/status', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { error, value } = updateMissionStatusSchema.validate(req.body);
-
     if (!id) {
       return res.status(400).json({
         error: 'ID manquant',
         message: 'L\'ID de la mission est requis'
       });
     }
+    const { error, value } = updateMissionStatusSchema.validate(req.body);
 
     if (error) {
       return res.status(400).json({
@@ -463,42 +337,31 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
     }
 
     // Vérifier les permissions
-    const canUpdateStatus = 
-      (req.user!.id === mission.clientId) || 
-      (req.user!.id === mission.assistantId);
-
-    if (!canUpdateStatus) {
-      return res.status(403).json({
-        error: 'Accès refusé',
-        message: 'Vous n\'avez pas les permissions pour modifier cette mission'
-      });
+    if (req.user) {
+      if (req.user.isClient() && mission.clientId !== req.user.id) {
+        return res.status(403).json({
+          error: 'Accès refusé',
+          message: 'Vous n\'avez pas les permissions pour modifier cette mission'
+        });
+      }
+      if (req.user.isAssistant() && mission.assistantId !== req.user.id) {
+        return res.status(403).json({
+          error: 'Accès refusé',
+          message: 'Vous n\'avez pas les permissions pour modifier cette mission'
+        });
+      }
     }
 
-    // Mettre à jour le statut et les timestamps
+    // Mettre à jour le statut
     mission.status = status as MissionStatus;
-    
-    switch (status) {
-      case 'in_progress':
-        mission.startedAt = new Date();
-        break;
-      case 'completed':
-        mission.completedAt = new Date();
-        break;
-      case 'cancelled':
-        mission.cancelledAt = new Date();
-        break;
-    }
-
     await missionRepository.save(mission);
 
     // Créer l'historique de statut
-    const statusHistory = statusHistoryRepository.create({
-      missionId: mission.id,
-      status: status as MissionStatus,
-      changedByUserId: req.user!.id,
-      comment
-    });
-
+    const statusHistory = new MissionStatusHistory();
+    statusHistory.missionId = mission.id;
+    statusHistory.status = status as MissionStatus;
+    statusHistory.changedByUserId = req.user!.id;
+    statusHistory.comment = comment;
     await statusHistoryRepository.save(statusHistory);
 
     return res.json({

@@ -7,203 +7,38 @@ import { requireClient } from '../middleware/auth';
 
 const router = Router();
 
-/**
- * @swagger
- * /api/payments/create-intent:
- *   post:
- *     summary: Créer un PaymentIntent pour une mission
- *     tags: [Payments]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - missionId
- *             properties:
- *               missionId:
- *                 type: string
- *     responses:
- *       200:
- *         description: PaymentIntent créé avec succès
- *       400:
- *         description: Mission invalide
- */
+// Créer un intent de paiement
 router.post('/create-intent', requireClient, async (req: Request, res: Response) => {
   try {
-    const { missionId } = req.body;
+    const { missionId, amount } = req.body;
 
-    if (!missionId) {
+    if (!missionId || !amount) {
       return res.status(400).json({
-        error: 'Mission ID requis',
-        message: 'L\'ID de la mission est obligatoire'
+        error: 'Données manquantes',
+        message: 'Mission ID et montant sont requis'
       });
     }
 
+    // En mode développement sans base de données, simuler un intent de paiement
+    if (process.env['NODE_ENV'] === 'development' && process.env['DB_IN_MEMORY'] === 'true') {
+      const mockPayment = {
+        id: `pi_${Date.now()}`,
+        missionId,
+        amount,
+        status: 'pending',
+        clientId: req.user!.id,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      return res.status(201).json({
+        message: 'Intent de paiement créé (mode développement)',
+        payment: mockPayment
+      });
+    }
+
+    // Vérifier que la mission existe
     const missionRepository = AppDataSource.getRepository(Mission);
-    const paymentRepository = AppDataSource.getRepository(Payment);
-
-    const mission = await missionRepository.findOne({
-      where: { id: missionId, clientId: req.user!.id }
-    });
-
-    if (!mission) {
-      return res.status(404).json({
-        error: 'Mission non trouvée',
-        message: 'La mission demandée n\'existe pas ou ne vous appartient pas'
-      });
-    }
-
-    if (mission.stripePaymentIntentId) {
-      return res.status(400).json({
-        error: 'Paiement déjà initié',
-        message: 'Un paiement a déjà été initié pour cette mission'
-      });
-    }
-
-    // Créer le paiement en base
-    const payment = paymentRepository.create({
-      missionId: mission.id,
-      amount: mission.getTotalAmount(),
-      type: PaymentType.ESCROW,
-      status: PaymentStatus.PENDING,
-      payerId: req.user!.id,
-      description: `Paiement pour la mission: ${mission.title}`
-    });
-
-    await paymentRepository.save(payment);
-
-    // TODO: Intégrer Stripe pour créer le PaymentIntent
-    // const paymentIntent = await stripe.paymentIntents.create({
-    //   amount: payment.getAmountInCents(),
-    //   currency: 'eur',
-    //   metadata: {
-    //     paymentId: payment.id,
-    //     missionId: mission.id
-    //   }
-    // });
-
-    // payment.stripePaymentIntentId = paymentIntent.id;
-    // await paymentRepository.save(payment);
-
-    res.json({
-      message: 'PaymentIntent créé avec succès',
-      payment: payment.toJSON(),
-      // clientSecret: paymentIntent.client_secret
-    });
-  } catch (error) {
-    console.error('Erreur lors de la création du PaymentIntent:', error);
-    res.status(500).json({
-      error: 'Erreur interne du serveur',
-      message: 'Une erreur est survenue lors de la création du paiement'
-    });
-  }
-});
-
-/**
- * @swagger
- * /api/payments/confirm:
- *   post:
- *     summary: Confirmer un paiement
- *     tags: [Payments]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - paymentIntentId
- *             properties:
- *               paymentIntentId:
- *                 type: string
- *     responses:
- *       200:
- *         description: Paiement confirmé avec succès
- */
-router.post('/confirm', requireClient, async (req: Request, res: Response) => {
-  try {
-    const { paymentIntentId } = req.body;
-
-    const paymentRepository = AppDataSource.getRepository(Payment);
-    const missionRepository = AppDataSource.getRepository(Mission);
-
-    const payment = await paymentRepository.findOne({
-      where: { stripePaymentIntentId: paymentIntentId, payerId: req.user!.id },
-      relations: ['mission']
-    });
-
-    if (!payment) {
-      return res.status(404).json({
-        error: 'Paiement non trouvé',
-        message: 'Le paiement demandé n\'existe pas'
-      });
-    }
-
-    // TODO: Confirmer le paiement avec Stripe
-    // const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-    
-    // if (paymentIntent.status === 'succeeded') {
-    //   payment.status = PaymentStatus.COMPLETED;
-    //   payment.processedAt = new Date();
-    //   await paymentRepository.save(payment);
-
-    //   // Mettre à jour la mission
-    //   payment.mission.stripePaymentIntentId = paymentIntentId;
-    //   await missionRepository.save(payment.mission);
-    // }
-
-    res.json({
-      message: 'Paiement confirmé avec succès',
-      payment: payment.toJSON()
-    });
-  } catch (error) {
-    console.error('Erreur lors de la confirmation du paiement:', error);
-    res.status(500).json({
-      error: 'Erreur interne du serveur',
-      message: 'Une erreur est survenue lors de la confirmation du paiement'
-    });
-  }
-});
-
-/**
- * @swagger
- * /api/payments/mission/{missionId}:
- *   get:
- *     summary: Récupérer les paiements d'une mission
- *     tags: [Payments]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: missionId
- *         required: true
- *         schema:
- *           type: string
- *         description: ID de la mission
- *     responses:
- *       200:
- *         description: Liste des paiements
- */
-router.get('/mission/:missionId', async (req: Request, res: Response) => {
-  try {
-    const { missionId } = req.params;
-
-    if (!missionId) {
-      return res.status(400).json({
-        error: 'ID de mission manquant',
-        message: 'L\'ID de la mission est requis'
-      });
-    }
-
-    const paymentRepository = AppDataSource.getRepository(Payment);
-    const missionRepository = AppDataSource.getRepository(Mission);
-
     const mission = await missionRepository.findOne({
       where: { id: missionId }
     });
@@ -211,34 +46,122 @@ router.get('/mission/:missionId', async (req: Request, res: Response) => {
     if (!mission) {
       return res.status(404).json({
         error: 'Mission non trouvée',
-        message: 'La mission demandée n\'existe pas'
+        message: 'La mission spécifiée n\'existe pas'
       });
     }
 
-    // Vérifier les permissions
-    const canViewPayments = 
-      (req.user!.id === mission.clientId) || 
-      (req.user!.id === mission.assistantId);
+    // Créer le paiement
+    const paymentRepository = AppDataSource.getRepository(Payment);
+    const payment = paymentRepository.create({
+      missionId,
+      amount,
+      type: PaymentType.ESCROW,
+      status: PaymentStatus.PENDING,
+      payerId: req.user!.id,
+      description: `Paiement pour la mission: ${mission.title}`
+    });
 
-    if (!canViewPayments) {
-      return res.status(403).json({
-        error: 'Accès refusé',
-        message: 'Vous n\'avez pas les permissions pour voir les paiements de cette mission'
+    const savedPayment = await paymentRepository.save(payment);
+
+    return res.status(201).json({
+      message: 'Intent de paiement créé',
+      payment: savedPayment
+    });
+  } catch (error) {
+    console.error('Erreur lors de la création de l\'intent de paiement:', error);
+    return res.status(500).json({
+      error: 'Erreur serveur',
+      message: 'Impossible de créer l\'intent de paiement'
+    });
+  }
+});
+
+// Confirmer un paiement
+router.post('/confirm', requireClient, async (req: Request, res: Response) => {
+  try {
+    const { paymentIntentId, missionId } = req.body;
+
+    if (!paymentIntentId || !missionId) {
+      return res.status(400).json({
+        error: 'Données manquantes',
+        message: 'Payment Intent ID et Mission ID sont requis'
       });
     }
 
+    // En mode développement sans base de données, simuler une confirmation
+    if (process.env['NODE_ENV'] === 'development' && process.env['DB_IN_MEMORY'] === 'true') {
+      const mockPayment = {
+        id: paymentIntentId,
+        missionId,
+        amount: 100,
+        status: 'completed',
+        clientId: req.user!.id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        processedAt: new Date()
+      };
+
+      return res.status(200).json({
+        message: 'Paiement confirmé avec succès (mode développement)',
+        payment: mockPayment
+      });
+    }
+
+    // Vérifier que le paiement existe
+    const paymentRepository = AppDataSource.getRepository(Payment);
+    const payment = await paymentRepository.findOne({
+      where: { id: paymentIntentId }
+    });
+
+    if (!payment) {
+      return res.status(404).json({
+        error: 'Paiement non trouvé',
+        message: 'Le paiement spécifié n\'existe pas'
+      });
+    }
+
+    // Mettre à jour le statut du paiement
+    payment.status = PaymentStatus.COMPLETED;
+    payment.processedAt = new Date();
+    await paymentRepository.save(payment);
+
+    return res.status(200).json({
+      message: 'Paiement confirmé avec succès',
+      payment
+    });
+  } catch (error) {
+    console.error('Erreur lors de la confirmation du paiement:', error);
+    return res.status(500).json({
+      error: 'Erreur serveur',
+      message: 'Impossible de confirmer le paiement'
+    });
+  }
+});
+
+// Récupérer l'historique des paiements
+router.get('/history', async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        error: 'Non authentifié',
+        message: 'Token d\'authentification requis'
+      });
+    }
+
+    const paymentRepository = AppDataSource.getRepository(Payment);
     const payments = await paymentRepository.find({
-      where: { missionId },
-      relations: ['payer', 'payee'],
+      where: { payerId: req.user.id },
       order: { createdAt: 'DESC' }
     });
 
-    return res.json({ payments });
+    return res.json({
+      payments
+    });
   } catch (error) {
-    console.error('Erreur lors de la récupération des paiements:', error);
+    console.error('Erreur lors de la récupération de l\'historique des paiements:', error);
     return res.status(500).json({
-      error: 'Erreur interne du serveur',
-      message: 'Une erreur est survenue lors de la récupération des paiements'
+      error: 'Erreur serveur',
+      message: 'Impossible de récupérer l\'historique des paiements'
     });
   }
 });
