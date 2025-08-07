@@ -1,7 +1,8 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthState, LoginCredentials, SignupData, User } from '@/types';
-import apiService from '@/services/api';
+import apiService, { ApiError } from '@/services/api';
+import { mapApiErrorToUserError, logApiError } from '@/utils/apiErrorHandler';
 
 const initialState: AuthState = {
   user: null,
@@ -16,20 +17,12 @@ export const login = createAsyncThunk(
   async (credentials: LoginCredentials, { rejectWithValue }) => {
     try {
       const response = await apiService.login(credentials);
-      
-      if (response.error) {
-        return rejectWithValue(response.error);
-      }
-
-      const { user, token } = response.data!;
-      
-      // Sauvegarder les données d'authentification
-      await AsyncStorage.setItem('auth_token', token);
-      await AsyncStorage.setItem('user_data', JSON.stringify(user));
-      
-      return { user, token };
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Erreur de connexion');
+      return response.data!;
+    } catch (error) {
+      const apiError = error as ApiError;
+      logApiError(apiError, 'login');
+      const userError = mapApiErrorToUserError(apiError);
+      return rejectWithValue(userError.message);
     }
   }
 );
@@ -39,20 +32,12 @@ export const signup = createAsyncThunk(
   async (userData: SignupData, { rejectWithValue }) => {
     try {
       const response = await apiService.signup(userData);
-      
-      if (response.error) {
-        return rejectWithValue(response.error);
-      }
-
-      const { user, token } = response.data!;
-      
-      // Sauvegarder les données d'authentification
-      await AsyncStorage.setItem('auth_token', token);
-      await AsyncStorage.setItem('user_data', JSON.stringify(user));
-      
-      return { user, token };
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Erreur d\'inscription');
+      return response.data!;
+    } catch (error) {
+      const apiError = error as ApiError;
+      logApiError(apiError, 'signup');
+      const userError = mapApiErrorToUserError(apiError);
+      return rejectWithValue(userError.message);
     }
   }
 );
@@ -68,7 +53,15 @@ export const loadStoredAuth = createAsyncThunk(
 
       if (token && userData) {
         const user = JSON.parse(userData);
-        return { user, token };
+        // Vérifier que le token est toujours valide
+        try {
+          await apiService.getProfile();
+          return { user, token };
+        } catch (error) {
+          // Token invalide, supprimer les données stockées
+          await AsyncStorage.multiRemove(['auth_token', 'user_data']);
+          return rejectWithValue('Session expirée');
+        }
       }
 
       return rejectWithValue('Aucune session trouvée');
@@ -82,37 +75,28 @@ export const logout = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
-      // Supprimer les données d'authentification
-      await Promise.all([
-        AsyncStorage.removeItem('auth_token'),
-        AsyncStorage.removeItem('user_data'),
-      ]);
-      
+      await apiService.logout();
       return true;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Erreur lors de la déconnexion');
+    } catch (error) {
+      const apiError = error as ApiError;
+      logApiError(apiError, 'logout');
+      // Continuer même si la requête échoue
+      return true;
     }
   }
 );
 
 export const updateProfile = createAsyncThunk(
   'auth/updateProfile',
-  async (profileData: Partial<User>, { rejectWithValue, getState }) => {
+  async (profileData: Partial<User>, { rejectWithValue }) => {
     try {
       const response = await apiService.updateProfile(profileData);
-      
-      if (response.error) {
-        return rejectWithValue(response.error);
-      }
-
-      const updatedUser = response.data!.user;
-      
-      // Mettre à jour les données stockées
-      await AsyncStorage.setItem('user_data', JSON.stringify(updatedUser));
-      
-      return updatedUser;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Erreur lors de la mise à jour du profil');
+      return response.data!.user;
+    } catch (error) {
+      const apiError = error as ApiError;
+      logApiError(apiError, 'updateProfile');
+      const userError = mapApiErrorToUserError(apiError);
+      return rejectWithValue(userError.message);
     }
   }
 );
