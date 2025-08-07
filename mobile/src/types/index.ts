@@ -25,6 +25,9 @@ export interface User {
   updatedAt: string;
 }
 
+// Type pour les statuts de mission
+export type MissionStatus = 'pending' | 'accepted' | 'in_progress' | 'completed' | 'cancelled' | 'disputed';
+
 export interface Mission {
   id: string;
   title: string;
@@ -40,7 +43,7 @@ export interface Mission {
   priceEstimate: number;
   cashAdvance: number;
   finalPrice: number;
-  status: 'pending' | 'accepted' | 'in_progress' | 'completed' | 'cancelled' | 'disputed';
+  status: MissionStatus;
   priority: 'low' | 'medium' | 'high' | 'urgent';
   instructions?: string;
   requirements?: string;
