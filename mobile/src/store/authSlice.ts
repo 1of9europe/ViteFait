@@ -91,7 +91,7 @@ export const updateProfile = createAsyncThunk(
   async (profileData: Partial<User>, { rejectWithValue }) => {
     try {
       const response = await apiService.updateProfile(profileData);
-      return response.data!.user;
+      return response.data!;
     } catch (error) {
       const apiError = error as ApiError;
       logApiError(apiError, 'updateProfile');
