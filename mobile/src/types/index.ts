@@ -46,6 +46,8 @@ export interface Mission {
   requirements?: string;
   requiresCar: boolean;
   requiresTools: boolean;
+  requiresInitialMeeting: boolean;
+  meetingTimeSlot?: string;
   category?: string;
   metadata?: Record<string, any>;
   acceptedAt?: string;
@@ -80,6 +82,8 @@ export interface CreateMissionData {
   requirements?: string;
   requiresCar: boolean;
   requiresTools: boolean;
+  requiresInitialMeeting: boolean;
+  meetingTimeSlot?: string;
   category?: string;
 }
 
@@ -169,6 +173,10 @@ export interface SignupData {
 export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
+  Login: undefined;
+  Signup: undefined;
+  ForgotPassword: undefined;
+  MainTabs: undefined;
   MissionDetail: { missionId: string };
   CreateMission: undefined;
   Profile: { userId?: string };
@@ -203,7 +211,7 @@ export interface ReviewCardProps {
   showMissionInfo?: boolean;
 }
 
-// Types pour les services
+// Types pour l'API
 export interface ApiResponse<T> {
   data?: T;
   message?: string;
@@ -246,7 +254,7 @@ export interface Notification {
   isRead: boolean;
 }
 
-// Types pour le store Redux
+// Types pour le store global
 export interface AppState {
   auth: AuthState;
   missions: MissionState;

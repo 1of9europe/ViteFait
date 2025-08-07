@@ -87,6 +87,12 @@ export class Mission {
   @Column({ type: 'boolean', default: false })
   requiresTools: boolean = false;
 
+  @Column({ type: 'boolean', default: false })
+  requiresInitialMeeting: boolean = false;
+
+  @Column({ type: 'timestamp with time zone', nullable: true })
+  meetingTimeSlot: Date | null = null;
+
   @Column({ type: 'varchar', length: 255, nullable: true })
   category?: string;
 
@@ -152,6 +158,8 @@ export class Mission {
     this.priority = MissionPriority.MEDIUM;
     this.requiresCar = false;
     this.requiresTools = false;
+    this.requiresInitialMeeting = false;
+    this.meetingTimeSlot = null;
     this.commissionAmount = 0;
     this.createdAt = new Date();
     this.updatedAt = new Date();

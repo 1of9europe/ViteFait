@@ -27,6 +27,12 @@ const createMissionSchema = Joi.object({
   requirements: Joi.string().max(500).optional(),
   requiresCar: Joi.boolean().default(false),
   requiresTools: Joi.boolean().default(false),
+  requiresInitialMeeting: Joi.boolean().required(),
+  meetingTimeSlot: Joi.when('requiresInitialMeeting', {
+    is: true,
+    then: Joi.date().iso().greater('now').required(),
+    otherwise: Joi.forbidden()
+  }),
   category: Joi.string().max(100).optional()
 });
 
@@ -45,6 +51,8 @@ router.post('/', requireClient, async (req: Request, res: Response) => {
         title: req.body.title || 'Mission test',
         description: req.body.description || 'Description test',
         status: 'pending',
+        requiresInitialMeeting: req.body.requiresInitialMeeting || false,
+        meetingTimeSlot: req.body.requiresInitialMeeting && req.body.meetingTimeSlot ? req.body.meetingTimeSlot : null,
         clientId: req.user!.id,
         createdAt: new Date(),
         updatedAt: new Date()
@@ -71,7 +79,8 @@ router.post('/', requireClient, async (req: Request, res: Response) => {
     Object.assign(mission, {
       ...value,
       clientId: req.user!.id,
-      status: MissionStatus.PENDING
+      status: MissionStatus.PENDING,
+      meetingTimeSlot: value.requiresInitialMeeting && value.meetingTimeSlot ? new Date(value.meetingTimeSlot) : null
     });
 
     const savedMission = await missionRepository.save(mission) as Mission;
