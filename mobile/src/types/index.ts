@@ -61,6 +61,49 @@ export interface Mission {
   assistant?: User;
 }
 
+// Types pour la création et mise à jour de missions
+export interface CreateMissionData {
+  title: string;
+  description: string;
+  pickupLatitude: number;
+  pickupLongitude: number;
+  pickupAddress: string;
+  dropLatitude?: number;
+  dropLongitude?: number;
+  dropAddress?: string;
+  timeWindowStart: string;
+  timeWindowEnd: string;
+  priceEstimate: number;
+  cashAdvance: number;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  instructions?: string;
+  requirements?: string;
+  requiresCar: boolean;
+  requiresTools: boolean;
+  category?: string;
+}
+
+export interface UpdateMissionData {
+  title?: string;
+  description?: string;
+  pickupLatitude?: number;
+  pickupLongitude?: number;
+  pickupAddress?: string;
+  dropLatitude?: number;
+  dropLongitude?: number;
+  dropAddress?: string;
+  timeWindowStart?: string;
+  timeWindowEnd?: string;
+  priceEstimate?: number;
+  cashAdvance?: number;
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
+  instructions?: string;
+  requirements?: string;
+  requiresCar?: boolean;
+  requiresTools?: boolean;
+  category?: string;
+}
+
 export interface Review {
   id: string;
   rating: number;
