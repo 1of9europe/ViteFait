@@ -2,8 +2,7 @@ import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { useSelector, useDispatch } from 'react-redux';
-import { AppDispatch } from '@/store';
-import { selectIsAuthenticated, loadStoredAuth } from '@/store/authSlice';
+import { selectIsAuthenticated, selectIsLoading, loadStoredAuth } from '@/store/authSlice';
 import AuthStack from './AuthStack';
 import MainStack from './MainStack';
 import LoadingScreen from '@/screens/LoadingScreen';
@@ -11,14 +10,17 @@ import LoadingScreen from '@/screens/LoadingScreen';
 const Stack = createStackNavigator();
 
 const Navigation: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useDispatch();
   const isAuthenticated = useSelector(selectIsAuthenticated);
+  const isLoading = useSelector(selectIsLoading);
 
   useEffect(() => {
+    // Charger l'authentification stockée au démarrage
     dispatch(loadStoredAuth());
   }, [dispatch]);
 
-  if (isAuthenticated === null) {
+  // Afficher l'écran de chargement pendant la vérification de l'authentification
+  if (isLoading) {
     return <LoadingScreen />;
   }
 
