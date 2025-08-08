@@ -1,37 +1,21 @@
 module.exports = {
-  presets: ['module:metro-react-native-babel-preset'],
+  presets: ['module:@react-native/babel-preset'],
   plugins: [
     [
       'module-resolver',
       {
         root: ['./src'],
-        extensions: ['.ios.js', '.android.js', '.js', '.ts', '.tsx', '.json'],
         alias: {
           '@': './src',
+          '@/components': './src/components',
+          '@/screens': './src/screens',
+          '@/services': './src/services',
+          '@/store': './src/store',
+          '@/utils': './src/utils',
+          '@/types': './src/types',
+          '@/config': './src/config',
         },
       },
     ],
-    'react-native-reanimated/plugin',
   ],
-  env: {
-    test: {
-      presets: [
-        ['@babel/preset-env', { targets: { node: 'current' } }],
-        '@babel/preset-typescript',
-        'module:metro-react-native-babel-preset',
-      ],
-      plugins: [
-        [
-          'module-resolver',
-          {
-            root: ['./src'],
-            extensions: ['.ios.js', '.android.js', '.js', '.ts', '.tsx', '.json'],
-            alias: {
-              '@': './src',
-            },
-          },
-        ],
-      ],
-    },
-  },
-}; 
+};
