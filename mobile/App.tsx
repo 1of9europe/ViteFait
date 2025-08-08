@@ -1,21 +1,29 @@
+/**
+ * ViteFait Mobile App
+ * Application de Conciergerie Urbaine
+ *
+ * @format
+ */
+
 import React from 'react';
-import { Provider as PaperProvider } from 'react-native-paper';
-import { Provider as StoreProvider } from 'react-redux';
-import { StripeProvider } from '@stripe/stripe-react-native';
-import { store } from '@/store';
-import Navigation from '@/navigation';
-import { config } from '@/config/environment';
+import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
+import HomeScreen from './src/screens/HomeScreen';
 
-const App: React.FC = () => {
+function App() {
+  const isDarkMode = useColorScheme() === 'dark';
+
   return (
-    <StoreProvider store={store}>
-      <PaperProvider>
-        <StripeProvider publishableKey={config.STRIPE_PUBLISHABLE_KEY}>
-          <Navigation />
-        </StripeProvider>
-      </PaperProvider>
-    </StoreProvider>
+    <View style={styles.container}>
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+      <HomeScreen />
+    </View>
   );
-};
+}
 
-export default App; 
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
+
+export default App;

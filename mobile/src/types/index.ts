@@ -1,160 +1,21 @@
-// Types pour l'API
-export interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  phone?: string;
-  role: 'client' | 'assistant';
-  status: 'active' | 'inactive' | 'suspended';
-  latitude?: number;
-  longitude?: number;
-  address?: string;
-  city?: string;
-  postalCode?: string;
-  profilePicture?: string;
-  bio?: string;
-  rating: number;
-  reviewCount: number;
-  isVerified: boolean;
-  stripeCustomerId?: string;
-  stripeConnectAccountId?: string;
-  fcmToken?: string;
-  lastSeen?: string;
-  createdAt: string;
-  updatedAt: string;
+// Types d'API
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data: T;
+  message?: string;
 }
 
-export interface Mission {
-  id: string;
-  title: string;
-  description: string;
-  pickupLatitude: number;
-  pickupLongitude: number;
-  pickupAddress: string;
-  dropLatitude?: number;
-  dropLongitude?: number;
-  dropAddress?: string;
-  timeWindowStart: string;
-  timeWindowEnd: string;
-  priceEstimate: number;
-  cashAdvance: number;
-  finalPrice: number;
-  status: 'pending' | 'accepted' | 'in_progress' | 'completed' | 'cancelled' | 'disputed';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  instructions?: string;
-  requirements?: string;
-  requiresCar: boolean;
-  requiresTools: boolean;
-  requiresInitialMeeting: boolean;
-  meetingTimeSlot?: string;
-  category?: string;
-  metadata?: Record<string, any>;
-  acceptedAt?: string;
-  startedAt?: string;
-  completedAt?: string;
-  cancelledAt?: string;
-  cancellationReason?: string;
-  commissionAmount: number;
-  stripePaymentIntentId?: string;
-  createdAt: string;
-  updatedAt: string;
-  client: User;
-  assistant?: User;
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
-// Types pour la création et mise à jour de missions
-export interface CreateMissionData {
-  title: string;
-  description: string;
-  pickupLatitude: number;
-  pickupLongitude: number;
-  pickupAddress: string;
-  dropLatitude?: number;
-  dropLongitude?: number;
-  dropAddress?: string;
-  timeWindowStart: string;
-  timeWindowEnd: string;
-  priceEstimate: number;
-  cashAdvance: number;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  instructions?: string;
-  requirements?: string;
-  requiresCar: boolean;
-  requiresTools: boolean;
-  requiresInitialMeeting: boolean;
-  meetingTimeSlot?: string;
-  category?: string;
-}
-
-export interface UpdateMissionData {
-  title?: string;
-  description?: string;
-  pickupLatitude?: number;
-  pickupLongitude?: number;
-  pickupAddress?: string;
-  dropLatitude?: number;
-  dropLongitude?: number;
-  dropAddress?: string;
-  timeWindowStart?: string;
-  timeWindowEnd?: string;
-  priceEstimate?: number;
-  cashAdvance?: number;
-  priority?: 'low' | 'medium' | 'high' | 'urgent';
-  instructions?: string;
-  requirements?: string;
-  requiresCar?: boolean;
-  requiresTools?: boolean;
-  category?: string;
-}
-
-export interface Review {
-  id: string;
-  rating: number;
-  comment?: string;
-  isPublic: boolean;
-  metadata?: Record<string, any>;
-  createdAt: string;
-  updatedAt: string;
-  missionId: string;
-  reviewerId: string;
-  reviewedId: string;
-  reviewer: User;
-  reviewed: User;
-  mission: Mission;
-}
-
-export interface Payment {
-  id: string;
-  amount: number;
-  currency: string;
-  type: 'escrow' | 'release' | 'refund' | 'cash_advance' | 'commission';
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
-  stripePaymentIntentId?: string;
-  stripeTransferId?: string;
-  stripeRefundId?: string;
-  description?: string;
-  metadata?: Record<string, any>;
-  failureReason?: string;
-  processedAt?: string;
-  createdAt: string;
-  updatedAt: string;
-  missionId: string;
-  payerId?: string;
-  payeeId?: string;
-  payer?: User;
-  payee?: User;
-  mission: Mission;
-}
-
-// Types pour l'authentification
-export interface AuthState {
-  user: User | null;
-  token: string | null;
-  isLoading: boolean;
-  error: string | null;
-}
-
+// Types d'authentification
 export interface LoginCredentials {
   email: string;
   password: string;
@@ -166,133 +27,155 @@ export interface SignupData {
   firstName: string;
   lastName: string;
   phone?: string;
-  role: 'client' | 'assistant';
 }
 
-// Types pour la navigation
-export type RootStackParamList = {
-  Auth: undefined;
-  Main: undefined;
-  Login: undefined;
-  Signup: undefined;
-  ForgotPassword: undefined;
-  MainTabs: undefined;
-  MissionDetail: { missionId: string };
-  CreateMission: undefined;
-  Profile: { userId?: string };
-  Chat: { missionId: string };
-  Payment: { missionId: string };
-  Review: { missionId: string };
-};
-
-export type MainTabParamList = {
-  Home: undefined;
-  Missions: undefined;
-  Map: undefined;
-  Notifications: undefined;
-  Profile: undefined;
-};
-
-// Types pour les composants
-export interface MissionCardProps {
-  mission: Mission;
-  onPress: () => void;
-  showActions?: boolean;
+export interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  role: 'client' | 'admin' | 'concierge';
+  avatar?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface UserCardProps {
+export interface AuthResponse {
   user: User;
-  onPress?: () => void;
-  showRating?: boolean;
+  token: string;
+  refreshToken: string;
 }
 
-export interface ReviewCardProps {
-  review: Review;
-  showMissionInfo?: boolean;
+// Types de missions
+export interface Mission {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  pickupAddress: string;
+  dropAddress?: string;
+  scheduledDate: string;
+  scheduledTime: string;
+  durationMin: number;
+  durationMax: number;
+  priority: 'normal' | 'urgent';
+  price: number;
+  clientId: string;
+  conciergeId?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-// Types pour l'API
-export interface ApiResponse<T> {
-  data?: T;
-  message?: string;
-  error?: string;
-  details?: string[];
+export interface CreateMissionData {
+  title: string;
+  description: string;
+  category: string;
+  pickupAddress: string;
+  dropAddress?: string;
+  scheduledDate: string;
+  scheduledTime: string;
+  durationMin: number;
+  durationMax: number;
+  priority: 'normal' | 'urgent';
+  meetingLocation?: string;
+  meetingDatetime?: string;
 }
 
-export interface PaginatedResponse<T> {
-  data: T[];
-  pagination: {
-    limit: number;
-    offset: number;
-    total: number;
-  };
+export interface UpdateMissionData {
+  title?: string;
+  description?: string;
+  category?: string;
+  pickupAddress?: string;
+  dropAddress?: string;
+  scheduledDate?: string;
+  scheduledTime?: string;
+  durationMin?: number;
+  durationMax?: number;
+  priority?: 'normal' | 'urgent';
 }
 
+export interface MissionFilters {
+  status?: string;
+  category?: string;
+  search?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  page?: number;
+  limit?: number;
+}
+
+// Types de paiements
+export interface Payment {
+  id: string;
+  amount: number;
+  currency: string;
+  status: 'pending' | 'completed' | 'failed' | 'refunded';
+  method: 'card' | 'bank_transfer' | 'cash';
+  missionId: string;
+  clientId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Types de chat
+export interface ChatMessage {
+  id: string;
+  content: string;
+  senderId: string;
+  senderName: string;
+  conversationId: string;
+  createdAt: string;
+}
+
+export interface Conversation {
+  id: string;
+  participants: User[];
+  lastMessage?: ChatMessage;
+  unreadCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Types de notifications
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  read: boolean;
+  userId: string;
+  relatedId?: string;
+  createdAt: string;
+}
+
+// Types de géolocalisation
 export interface Location {
   latitude: number;
   longitude: number;
   address?: string;
 }
 
-export interface ChatMessage {
-  id: string;
-  missionId: string;
-  senderId: string;
-  senderRole: string;
-  message: string;
-  type: 'text' | 'image' | 'location';
-  timestamp: string;
-}
+// Types de navigation
+export type RootStackParamList = {
+  Auth: undefined;
+  Main: undefined;
+  Login: undefined;
+  Signup: undefined;
+  Home: undefined;
+  Missions: undefined;
+  MissionDetails: { missionId: string };
+  NewMission: undefined;
+  Profile: undefined;
+  Settings: undefined;
+  Chat: { conversationId: string };
+  Notifications: undefined;
+};
 
-export interface Notification {
-  id: string;
-  type: string;
-  title: string;
-  message: string;
-  data?: Record<string, any>;
-  timestamp: string;
-  isRead: boolean;
-}
-
-// Types pour le store global
-export interface AppState {
-  auth: AuthState;
-  missions: MissionState;
-  user: UserState;
-  notifications: NotificationState;
-  chat: ChatState;
-}
-
-export interface MissionState {
-  missions: Mission[];
-  currentMission: Mission | null;
-  isLoading: boolean;
-  error: string | null;
-  filters: MissionFilters;
-}
-
-export interface MissionFilters {
-  status?: string;
-  radius?: number;
-  location?: Location;
-  category?: string;
-}
-
-export interface UserState {
-  profile: User | null;
-  isLoading: boolean;
-  error: string | null;
-}
-
-export interface NotificationState {
-  notifications: Notification[];
-  unreadCount: number;
-  isLoading: boolean;
-  error: string | null;
-}
-
-export interface ChatState {
-  messages: Record<string, ChatMessage[]>;
-  isLoading: boolean;
-  error: string | null;
-} 
+export type MainTabParamList = {
+  Home: undefined;
+  Missions: undefined;
+  Chat: undefined;
+  Profile: undefined;
+}; 
